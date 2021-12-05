@@ -9,7 +9,36 @@ const { Util } = require('discord.js');
 // 'Curabitur sed diam elementum, egestas est eget, finibus risus. Curabitur eleifend ligula velit, eget fringilla nulla fringilla eu. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Praesent mollis tortor et felis placerat accumsan. Fusce efficitur malesuada sapien, quis vulputate dolor commodo consectetur. Proin ullamcorper semper ipsum, ac tincidunt tortor porttitor quis. Nullam eros ipsum, pellentesque sed quam fringilla, pretium pharetra elit.';
 
 const chatListIds = [];
-const blacklist = new Map([
+const _blacklist = new Map([
+    ['A', []],
+    ['B', []],
+    ['C', []],
+    ['D', []],
+    ['E', []],
+    ['F', []],
+    ['G', []],
+    ['H', []],
+    ['I', []],
+    ['J', []],
+    ['K', []],
+    ['L', []],
+    ['M', []],
+    ['N', []],
+    ['O', []],
+    ['P', []],
+    ['Q', []],
+    ['R', []],
+    ['S', []],
+    ['T', []],
+    ['U', []],
+    ['V', []],
+    ['W', []],
+    ['X', []],
+    ['Y', []],
+    ['Z', []]
+]);
+
+const messageIds = new Map([
     ['A', []],
     ['B', []],
     ['C', []],
@@ -88,7 +117,11 @@ async function getAllMessages(channel) {
 }
 
 async function deleteOldMessages(channel) {
-    chatListIds.forEach(id => cha)
+    chatListIds.forEach(id =>
+        channel.fetcMessage(id).then(msg =>
+            msg.delete()
+        )
+    );
 }
 
 function addOldToBl(list) {
@@ -97,9 +130,46 @@ function addOldToBl(list) {
 
 function addToBl(name) {
     const first = name.charAt(0).toUpperCase();
-    blacklist.get(first).push(name.trim());
+    _blacklist.get(first).push(name.trim());
 }
 
 async function postBl(channel) {
-    blacklist.forEach()
+    if (messageIds.get('A').length < 2) {
+        _blacklist.forEach(async messages => {
+            await channel.send(messages.join('\n'));
+        });
+        //clear chat????????
+        return;
+    }
+}
+
+const fs = require('fs');
+
+// convert JSON object to string
+// const data = JSON.stringify(user);
+
+// write JSON string to a file
+function saveToFile(blacklist) {
+    fs.writeFile('Blacklist.json', JSON.stringify([...blacklist], null, 4), (err) => {
+        if (err) {
+            throw err;
+        }
+        console.log("JSON data is saved.");
+    });
+}
+
+function getFromFile() {
+    let map;
+    fs.readFile('Blacklist.json', 'utf-8', (err, data) => {
+        if (err) {
+            throw err;
+        }
+    
+        // parse JSON object
+        map = new Map(JSON.parse(data));
+    
+        // print JSON object
+        console.log(map);
+    });
+    return map;
 }
