@@ -1,6 +1,16 @@
-// import { Util } from "discord.js";
-import { SlashCommandBuilder } from "@discordjs/builders";
-import { Channel, CommandInteraction, Interaction, TextChannel } from "discord.js";
+import { Channel, CommandInteraction, TextBasedChannels } from 'discord.js';
+import { Discord, Slash } from 'discordx';
+import * as fs from "fs"
+
+@Discord()
+abstract class AppDiscord {
+	@Slash("ping", {description: 'Replies with Pong!'} )
+	private async ping(interaction: CommandInteraction) {
+		await interaction.reply('Pong!');
+	}
+}
+
+// import { Channel, CommandInteraction, Interaction, TextChannel } from "discord.js";
 
 //change this to the old text if it exists, and modify it, save the id of the messages for deletion later after the reply has been made
 // const message = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis in dignissim justo. Aliquam vel dictum lectus. Phasellus dictum elit vitae justo pharetra rhoncus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Quisque et ligula lacinia, porttitor nulla a, euismod nunc. Etiam tellus sapien, porta nec massa non, finibus mattis leo. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Aliquam massa arcu, ullamcorper id felis at, dapibus vulputate enim.' +
@@ -9,8 +19,8 @@ import { Channel, CommandInteraction, Interaction, TextChannel } from "discord.j
 // 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum et sollicitudin felis. Vestibulum pretium metus at pellentesque iaculis. Fusce ornare purus id efficitur eleifend. Mauris volutpat ligula tellus, ac maximus enim tempor vel. Morbi ut porttitor augue, eget congue urna. Curabitur venenatis gravida mauris vel hendrerit. Vivamus a dolor ex. Ut mollis, ipsum semper sollicitudin ultrices, dolor orci efficitur neque, in placerat risus velit et diam. Etiam ornare nunc ut sapien imperdiet, eu venenatis massa laoreet. Duis fermentum turpis ac lectus sagittis aliquam. Quisque ut magna dolor. Donec tristique mi semper dui luctus cursus. Ut quis sollicitudin lacus, scelerisque vulputate eros. Aenean ac nibh volutpat, ultrices tortor vel, fringilla diam. Mauris pharetra, justo id dapibus porttitor, velit arcu consequat nisi, quis sagittis lacus mauris nec eros.\n'+
 // 'Curabitur sed diam elementum, egestas est eget, finibus risus. Curabitur eleifend ligula velit, eget fringilla nulla fringilla eu. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Praesent mollis tortor et felis placerat accumsan. Fusce efficitur malesuada sapien, quis vulputate dolor commodo consectetur. Proin ullamcorper semper ipsum, ac tincidunt tortor porttitor quis. Nullam eros ipsum, pellentesque sed quam fringilla, pretium pharetra elit.';
 
-// const chatListIds = [];
-const _blacklist = new Map([
+const chatListIds: string[] = [];
+const _blacklist = new Map<string, string[]>([
     ['A', []],
     ['B', []],
     ['C', []],
@@ -68,38 +78,39 @@ const messageIds = new Map([
     ['Z', []]
 ]);
 
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('addAll')
-        .setDescription('Adds the user to the blacklist'),
-    async execute(interaction: CommandInteraction, channel: Channel) {
-        if ((interaction.channel as TextChannel).name !== 'blacklist') {
-            console.log('channel was not a blacklist');
-            await interaction.reply('channel is not a blacklist');
-            return;
-        }
-        const names = await getAllMessages(channel);
+// module.exports = {
+//     data: new SlashCommandBuilder()
+//         .setName('addAll')
+//         .setDescription('Adds the user to the blacklist'),
+//     async execute(interaction: CommandInteraction, channel: Channel) {
+//         if ((interaction.channel as TextChannel).name !== 'blacklist') {
+//             console.log('channel was not a blacklist');
+//             await interaction.reply('channel is not a blacklist');
+//             return;
+//         }
+//         const names = await getAllMessages(channel);
 
-        //-------- save blacklist to file here -------
+//         //-------- save blacklist to file here -------
 
-        //delete old messages
-        deleteOldMessages(channel);
-
-
-        // Util.splitMessage(message).forEach(async e => {
-        //     await channel.send(e);
-        // });
-
-        //FIXME
-        //might take more than 3 seconds so if it starts failing that might be why
-        //a fix does exist with an other type of reply
-        await interaction.reply('aded to list ' + names[0]);
-    },
-};
+//         //delete old messages
+//         deleteOldMessages(channel);
 
 
-async function getAllMessages(channel) {
-    let names = [];
+//         // Util.splitMessage(message).forEach(async e => {
+//         //     await channel.send(e);
+//         // });
+
+//         //FIXME
+//         //might take more than 3 seconds so if it starts failing that might be why
+//         //a fix does exist with an other type of reply
+//         await interaction.reply('aded to list ' + names[0]);
+//     },
+// };
+
+
+async function getAllMessages(channel: TextBasedChannels) {
+    let names: string[] = [];
+    channel
     await channel.messages.fetch().then(messages => {
         console.log(`Received ${messages.size} messages`);
         //Iterate through the messages here with the variable "messages".
@@ -117,25 +128,25 @@ async function getAllMessages(channel) {
     return names.reverse();
 }
 
-async function deleteOldMessages(channel) {
+async function deleteOldMessages(channel: TextBasedChannels) {
     chatListIds.forEach(id =>
-        channel.fetcMessage(id).then(msg =>
+        channel.messages.fetch(id).then(msg =>
             msg.delete()
         )
     );
 }
 
-function addOldToBl(list) {
+function addOldToBl(list: string) {
     list.split('\n').forEach(name => addToBl(name));
 }
 
-function addToBl(name) {
+function addToBl(name: string) {
     const first = name.charAt(0).toUpperCase();
-    _blacklist.get(first).push(name.trim());
+    _blacklist.get(first)!.push(name.trim());
 }
 
-async function postBl(channel) {
-    if (messageIds.get('A').length < 2) {
+async function postBl(channel: TextBasedChannels) {
+    if (messageIds.get('A')!.length < 2) {
         _blacklist.forEach(async messages => {
             await channel.send(messages.join('\n'));
         });
@@ -144,14 +155,12 @@ async function postBl(channel) {
     }
 }
 
-const fs = require('fs');
-
 // convert JSON object to string
 // const data = JSON.stringify(user);
 
 // write JSON string to a file
-function saveToFile(blacklist) {
-    fs.writeFile('Blacklist.json', JSON.stringify([...blacklist], null, 4), (err) => {
+function saveToFile(blacklist: Map<string, string[]>) {
+    fs.writeFile('Blacklist.json', JSON.stringify([...blacklist], null, 4), (err: any) => {
         if (err) {
             throw err;
         }
@@ -161,7 +170,7 @@ function saveToFile(blacklist) {
 
 function getFromFile() {
     let map;
-    fs.readFile('Blacklist.json', 'utf-8', (err, data) => {
+    fs.readFile('Blacklist.json', 'utf-8', (err: NodeJS.ErrnoException | null, data: string) => {
         if (err) {
             throw err;
         }

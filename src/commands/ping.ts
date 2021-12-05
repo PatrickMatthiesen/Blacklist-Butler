@@ -1,10 +1,19 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
+import { CommandInteraction } from 'discord.js';
+import { Discord, Slash } from 'discordx';
 
-module.exports = {
-	data: new SlashCommandBuilder()
-		.setName('ping')
-		.setDescription('Replies with Pong!'),
-	async execute(interaction) {
+@Discord()
+abstract class AppDiscord {
+	@Slash("ping", {description: 'Replies with Pong!'} )
+	private async ping(interaction: CommandInteraction) {
 		await interaction.reply('Pong!');
-	},
-};
+	}
+}
+
+// module.exports = {
+// 	data: new SlashCommandBuilder()
+// 		.setName('ping')
+// 		.setDescription('Replies with Pong!'),
+// 	async execute(interaction) {
+// 		await interaction.reply('Pong!');
+// 	},
+// };

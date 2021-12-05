@@ -1,6 +1,6 @@
 // Require the necessary discord.js classes
 // const { Client, Collection, Intents } = require('discord.js');
-import { Collection, Intents } from "discord.js";
+import { Intents } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
 const fs = require('fs');
@@ -14,20 +14,21 @@ const client = new Client({
     simpleCommand: {
         prefix: "!"
     },
+    classes: [`${__dirname}/commands/**/*.{js,ts}`],
     intents: [
         Intents.FLAGS.GUILDS,
         Intents.FLAGS.GUILD_MESSAGES
     ],
-    silent: true
+    silent: false //console logs: on/off
 });
-client.commands = new Collection();
-const commandFiles = fs.readdirSync('./commands').filter((file) => file.endsWith('.js'));
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    // Set a new item in the Collection
-    // With the key as the command name and the value as the exported module
-    client.commands.set(command.data.name, command);
-}
+// client.commands = new Collection();
+// const commandFiles = fs.readdirSync('./commands').filter((file: string) => file.endsWith('.js'));
+// for (const file of commandFiles) {
+// 	const command = require(`./commands/${file}`);
+// 	// Set a new item in the Collection
+// 	// With the key as the command name and the value as the exported module
+// 	client.commands.set(command.data.name, command);
+// }
 // When the client is ready, run this code (only once)
 client.once('ready', async () => {
     //const Guilds = client.guilds.cache.map(guild => guild.id); // get the ids of all atached guilds
@@ -40,6 +41,7 @@ client.once('ready', async () => {
     console.log("Bot started!");
 });
 client.on("interactionCreate", (interaction) => {
+    interaction.channel;
     client.executeInteraction(interaction);
 });
 // client.on('interactionCreate', async interaction => {
@@ -53,6 +55,8 @@ client.on("interactionCreate", (interaction) => {
 // 		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
 // 	}
 // });
+// has to be decorated with @SimpleCommand()
+// https://discord-ts.js.org/docs/decorators/commands/simplecommand/
 client.on('messageCreate', async (message) => {
     client.executeCommand(message);
     if (!message || message.author.bot)

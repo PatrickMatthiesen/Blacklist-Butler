@@ -1,12 +1,12 @@
 // Require the necessary discord.js classes
 // const { Client, Collection, Intents } = require('discord.js');
 import { Collection, Intents, Interaction, Message } from "discord.js";
-import { Client } from "discordx";
+import { Client, SimpleCommand } from "discordx";
 import { dirname, importx } from "@discordx/importer";
-const fs = require('fs');
+import * as dotenv from "dotenv"
 
 // get secrets
-require('dotenv').config();
+dotenv.config();
 const token = process.env.DISCORD_TOKEN;
 //const clientId = process.env.CLIENT_ID;
 // const guildId = process.env.GUILD_ID;
@@ -16,22 +16,23 @@ const client = new Client({
 	simpleCommand: {
 		prefix: "!"
 	},
+	classes: [`${dirname(import.meta.url)}/commands/**/*.{js,ts}`],
 	intents: [
 		Intents.FLAGS.GUILDS,
 		Intents.FLAGS.GUILD_MESSAGES
 	],
-	silent: true
+	silent: false //console logs: on/off
 });
 
-client.commands = new Collection();
-const commandFiles = fs.readdirSync('./commands').filter((file) => file.endsWith('.js'));
+// client.commands = new Collection();
+// const commandFiles = fs.readdirSync('./commands').filter((file: string) => file.endsWith('.js'));
 
-for (const file of commandFiles) {
-	const command = require(`./commands/${file}`);
-	// Set a new item in the Collection
-	// With the key as the command name and the value as the exported module
-	client.commands.set(command.data.name, command);
-}
+// for (const file of commandFiles) {
+// 	const command = require(`./commands/${file}`);
+// 	// Set a new item in the Collection
+// 	// With the key as the command name and the value as the exported module
+// 	client.commands.set(command.data.name, command);
+// }
 
 // When the client is ready, run this code (only once)
 client.once('ready', async () => {
@@ -48,6 +49,7 @@ client.once('ready', async () => {
 });
 
 client.on("interactionCreate", (interaction: Interaction) => {
+	interaction.channel
 	client.executeInteraction(interaction);
 });
 
@@ -66,29 +68,31 @@ client.on("interactionCreate", (interaction: Interaction) => {
 // 	}
 // });
 
+// has to be decorated with @SimpleCommand()
+// https://discord-ts.js.org/docs/decorators/commands/simplecommand/
 client.on('messageCreate', async (message: Message) => {
 
 	client.executeCommand(message);
 
-	if (!message || message.author.bot) return;
+	// if (!message || message.author.bot) return;
 
-	// const command = client.commands.get(message.commandName);
+	// // const command = client.commands.get(message.commandName);
 
-	// if (!command) return;
+	// // if (!command) return;
 
-	// try {
-	// 	await command.execute(message);
-	// } catch (error) {
-	// 	console.error(error);
-	// 	await message.reply('There was an error while executing this command!');
-	// }
+	// // try {
+	// // 	await command.execute(message);
+	// // } catch (error) {
+	// // 	console.error(error);
+	// // 	await message.reply('There was an error while executing this command!');
+	// // }
 
-	message.channel.send(message.content);
+	// message.channel.send(message.content);
 });
 
 async function run() {
 	await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
-	client.login(process.env.BOT_TOKEN ?? ""); // provide your bot token
+	client.login(token ?? ""); // provide your bot token
 }
 
 run();
