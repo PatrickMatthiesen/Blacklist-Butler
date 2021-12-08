@@ -2,7 +2,7 @@ import { CommandInteraction } from 'discord.js';
 import { Discord, Slash } from 'discordx';
 
 @Discord()
-abstract class AppDiscord {
+abstract class BlacklistButler {
 	@Slash("ping", {description: 'Replies with Pong!'} )
 	private async ping(interaction: CommandInteraction) {
 		await interaction.reply('Pong!');

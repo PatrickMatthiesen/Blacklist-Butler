@@ -1,7 +1,7 @@
 // Require the necessary discord.js classes
 // const { Client, Collection, Intents } = require('discord.js');
-import { Collection, Intents, Interaction, Message } from "discord.js";
-import { Client, SimpleCommand } from "discordx";
+import { Intents, Interaction, Message } from "discord.js";
+import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
 import * as dotenv from "dotenv"
 
@@ -49,7 +49,6 @@ client.once('ready', async () => {
 });
 
 client.on("interactionCreate", (interaction: Interaction) => {
-	interaction.channel
 	client.executeInteraction(interaction);
 });
 

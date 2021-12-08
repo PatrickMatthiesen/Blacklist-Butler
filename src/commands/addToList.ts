@@ -1,13 +1,18 @@
 import { Channel, CommandInteraction, TextBasedChannels } from 'discord.js';
-import { Discord, Slash } from 'discordx';
+import { Discord, Slash, SlashChoice, SlashOption } from 'discordx';
 import * as fs from "fs"
 
 @Discord()
-abstract class AppDiscord {
-	@Slash("ping", {description: 'Replies with Pong!'} )
-	private async ping(interaction: CommandInteraction) {
-		await interaction.reply('Pong!');
-	}
+abstract class BlacklistButler {
+    @Slash("add", { description: 'Adds the users to the blacklist' })
+    async add(
+        @SlashOption("all", { description: 'add all in the chat' })
+        all: boolean,
+        @SlashOption('name', { description: 'add one person' })
+        name: string,
+        interaction: CommandInteraction): Promise<void> {
+        await interaction.reply({ content: `${name ? name : all}!`, ephemeral: true });
+    }
 }
 
 // import { Channel, CommandInteraction, Interaction, TextChannel } from "discord.js";
@@ -174,12 +179,41 @@ function getFromFile() {
         if (err) {
             throw err;
         }
-    
+
         // parse JSON object
         map = new Map(JSON.parse(data));
-    
+
         // print JSON object
         console.log(map);
     });
     return map;
+}
+
+class Blacklist {
+
+    blacklist: Map<string, string[]>;
+    oldListIds: Map<string, string>;
+
+    constructor() {
+        this.blacklist = new Map<string, string[]>()
+        this.oldListIds = new Map<string, string>()
+    }
+
+    addOld(message: string, messageId: string) {
+        message.split('\n').forEach(name => this.add(name, messageId));
+    }
+
+    add(message: string, messageId: string) {
+        let char: string
+        if (new RegExp(`^--[A-Z]--`)) {
+            char = message.charAt(2);
+        } else char = message.charAt(0);
+
+        if (this.blacklist.has()) {
+            
+        }
+
+        this.blacklist.set(message.charAt(0), message)
+    }
+
 }

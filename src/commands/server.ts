@@ -1,11 +1,12 @@
+import { EPERM } from 'constants';
 import { CommandInteraction } from 'discord.js';
-import { Discord, SimpleCommand, Slash } from 'discordx';
+import { Discord, Slash } from 'discordx';
 
 @Discord()
-abstract class AppDiscord {
+abstract class BlacklistButler {
 	@Slash("server", {description: 'Replies with server info!'} )
 	private async server(interaction: CommandInteraction) {
-		await interaction.reply(`Server name: ${interaction.guild?.name}\nTotal members: ${interaction.guild?.memberCount}`);
+		await interaction.reply({content: `Server name: ${interaction.guild?.name}\nTotal members: ${interaction.guild?.memberCount}`, ephemeral: true});
 	}
 }
 
