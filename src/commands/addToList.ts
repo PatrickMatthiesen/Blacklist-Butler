@@ -1,17 +1,54 @@
-import { Channel, CommandInteraction, TextBasedChannels } from 'discord.js';
-import { Discord, Slash, SlashChoice, SlashOption } from 'discordx';
+import { Channel, CommandInteraction, DiscordAPIError, Message, TextBasedChannels, TextChannel } from 'discord.js';
+import { Discord, Permission, Slash, SlashChoice, SlashOption } from 'discordx';
 import * as fs from "fs"
 
+
+
+@Permission(false)
+@Permission({ id: '923344421003591740', type: 'ROLE', permission: true })
 @Discord()
 abstract class BlacklistButler {
     @Slash("add", { description: 'Adds the users to the blacklist' })
     async add(
-        @SlashOption("all", { description: 'add all in the chat' })
-        all: boolean,
-        @SlashOption('name', { description: 'add one person' })
+        @SlashOption('name', { description: 'name of person' })
         name: string,
+        @SlashOption('refresh', { description: 'delere all messages and resend the blacklist to chat' })
+        refresh: boolean = false,
+        // @SlashChoice('One', 'one')
+        // @SlashOption('amount', { description: 'add all or just one' })
+        // amount: string,
         interaction: CommandInteraction): Promise<void> {
-        await interaction.reply({ content: `${name ? name : all}!`, ephemeral: true });
+        if (!interaction.channel) {
+            return;
+        }
+
+        if ((interaction.channel as TextChannel).name !== 'blacklist') {
+            console.log('channel was not a blacklist');
+            await interaction.reply({ content: 'channel is not a blacklist', ephemeral: true });
+            return;
+        }
+
+        var blacklist = new Blacklist(refresh, interaction.channel);
+        await addAll(interaction.channel, blacklist)
+        refresh = blacklist.getRefresh()
+
+        if (name) {
+            blacklist.add(name)
+        }
+        
+        
+        if (!name || name == 'all') {           
+            //do some delete stuff for the messages of style 'add someName'
+            // await interaction.reply({ content: 'added all to the list' + (refresh ? 'and refreshed the list' : ''), ephemeral: true })
+        }
+
+        if (refresh) {
+            console.log('tries to write to channel');
+            await blacklist.writeToChat()
+        } else blacklist.updateOldMessages()
+        
+
+        await interaction.reply({ content: `added ${name}! ${refresh}`, ephemeral: true });
     }
 }
 
@@ -113,21 +150,21 @@ const messageIds = new Map([
 // };
 
 
-async function getAllMessages(channel: TextBasedChannels) {
+async function addAll(channel: TextBasedChannels, blacklist: Blacklist): Promise<string[]> {
     let names: string[] = [];
-    channel
+    // channel
     await channel.messages.fetch().then(messages => {
         console.log(`Received ${messages.size} messages`);
         //Iterate through the messages here with the variable "messages".
-        messages.forEach(message => {
-            if (message.content.startsWith('--')) {
-                addOldToBl(message.content);
-                chatListIds.push(message.id);
-            } else if (message.content.toLowerCase().startsWith('add ')) {
-                addToBl(message.content.slice(4));
-                chatListIds.push(message.id);
+        messages.forEach(msg => {
+            if (msg.content.startsWith('--')) {
+                blacklist.addOld(msg)
+            } else if (msg.content.toLowerCase().startsWith('add ')) {
+                blacklist.add(msg.content.slice(4))
+                // addToBl(msg.content.slice(4));
+                // chatListIds.push(msg.id);
             }
-            console.log(message.content);
+            console.log(msg.content);
         });
     });
     return names.reverse();
@@ -191,29 +228,122 @@ function getFromFile() {
 
 class Blacklist {
 
-    blacklist: Map<string, string[]>;
-    oldListIds: Map<string, string>;
+    private blacklist: Map<string, string[]>; // the content of the old messages
+    private oldMessages: Map<string, Message>; //the old messages for editing the messages
+    private toDelete: string[]; //list of ids to delete
+    private refresh: boolean;
+    private channel: TextBasedChannels;
 
-    constructor() {
+    constructor(toRefresh: boolean, channel: TextBasedChannels) {
         this.blacklist = new Map<string, string[]>()
-        this.oldListIds = new Map<string, string>()
+        this.oldMessages = new Map<string, Message>()
+        this.toDelete = [];
+        this.refresh = toRefresh;
+        this.channel = channel;
     }
 
-    addOld(message: string, messageId: string) {
-        message.split('\n').forEach(name => this.add(name, messageId));
+    addOld(message: Message) {
+        message.content.split('\n').forEach(name => this.add(name));
+        this.oldMessages.set(message.content.charAt(2), message)
+        if (message.author.id != '915952587273023508') { // if it isn't this bot that send the message then delete the message
+            this.toDelete.push(message.id)
+            this.refresh = true
+        }
     }
 
-    add(message: string, messageId: string) {
-        let char: string
-        if (new RegExp(`^--[A-Z]--`)) {
-            char = message.charAt(2);
-        } else char = message.charAt(0);
+    // async addNew(name: string): Promise<boolean> { //implement refresh --------------------------------        
+    //     const char = name.charAt(0);
 
-        if (this.blacklist.has()) {
-            
+    //     var mess: string[] = [];
+
+
+    //     //add something that finds the old message id from a json file
+    //     await this.channel.messages.fetch().then(messages => {
+    //         messages.forEach(msg => {
+    //             if (!this.refresh && msg.author.id != '915952587273023508') {
+    //                 this.refresh = true;
+    //             }
+    //             if (msg.content.startsWith('--' + char)) {
+    //                 msg.content.split('\n').forEach(name => mess.push(name));
+    //             }
+    //             mess.push(name)
+    //             mess.sort()
+    //             if (this.refresh) {
+    //                 this.add(name)
+    //                 return;
+    //             } else {
+    //                 msg.edit(mess.join('\n'))
+    //             }
+    //             console.log(mess);
+    //             return;
+    //         });
+    //     });
+
+    //     return this.refresh;
+    // }
+
+    add(message: string) {
+        let char: string;
+
+        if (new RegExp(`^--[A-Z]--`).test(message)) {
+            char = message.charAt(2).toLocaleUpperCase()
+        } else char = message.charAt(0).toLocaleUpperCase();
+
+        if (this.blacklist.has(char)) {
+            this.blacklist.get(char)?.push(message);
+            return;
         }
 
-        this.blacklist.set(message.charAt(0), message)
+        this.blacklist.set(char, new Array(message))
+    }
+
+    updateOldMessages() {
+        this.oldMessages.forEach(async (message, key) =>
+            await this.updateMessage(
+                message,
+                this.blacklist.get(key)
+            )
+        )
+    }
+
+    async updateMessage(message: Message | undefined, list: string[] | undefined) {
+        if (!list) return; //if undifined, nan, null, '', 0 or false
+
+        list.sort();
+
+        try {
+            message?.edit(list.join('\n'))
+        } catch (err) {
+
+        }
+
+        console.log(`updated message ${message?.id} with new content`);
+    }
+
+    async writeToChat() {
+        this.blacklist = new Map([...this.blacklist].sort())
+        this.blacklist.forEach(item => {
+            console.log(item);
+            item.sort()
+            const joined = item.join('\n')
+            this.channel.send(joined)
+        })
+    }
+
+    async cleanChat(includeOld: boolean = false) {
+        if (includeOld) {
+            this.oldMessages.forEach(async msg => await msg.delete())
+        }
+
+        this.toDelete.forEach(async id => await (await this.channel.messages.fetch(id)).delete())
+    }
+
+    // getToDelete(): string {
+    //     return this.oldMessages.toString().replaceAll(',', '\n'); //yeah no that wont work my friend
+    // }
+
+    getRefresh(): boolean {
+        return this.refresh;
     }
 
 }

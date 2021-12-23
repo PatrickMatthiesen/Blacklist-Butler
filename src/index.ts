@@ -9,7 +9,7 @@ import * as dotenv from "dotenv"
 dotenv.config();
 const token = process.env.DISCORD_TOKEN;
 //const clientId = process.env.CLIENT_ID;
-// const guildId = process.env.GUILD_ID;
+const guildId = process.env.GUILD_ID;
 
 // Create a new client instance
 const client = new Client({
@@ -21,6 +21,7 @@ const client = new Client({
 		Intents.FLAGS.GUILDS,
 		Intents.FLAGS.GUILD_MESSAGES
 	],
+	botGuilds: [guildId!], //remmeber this for taler as it will have to be the ids of the guilds the bot is in
 	silent: false //console logs: on/off
 });
 
