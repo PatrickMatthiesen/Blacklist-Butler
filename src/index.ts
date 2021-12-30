@@ -3,13 +3,13 @@
 import { Intents, Interaction, Message } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
-import * as dotenv from "dotenv"
+import * as dotenv from "dotenv";
 
 // get secrets
 dotenv.config();
-const token = process.env.DISCORD_TOKEN;
+const token = process.env.DISCORD_TOKEN ?? '';
 //const clientId = process.env.CLIENT_ID;
-const guildId = process.env.GUILD_ID;
+const guildId = process.env.GUILD_ID ?? '';
 
 // Create a new client instance
 const client = new Client({
@@ -21,7 +21,7 @@ const client = new Client({
 		Intents.FLAGS.GUILDS,
 		Intents.FLAGS.GUILD_MESSAGES
 	],
-	botGuilds: [guildId!], //remmeber this for taler as it will have to be the ids of the guilds the bot is in
+	botGuilds: [guildId], //remmeber this for taler as it will have to be the ids of the guilds the bot is in
 	silent: false //console logs: on/off
 });
 
@@ -92,7 +92,7 @@ client.on('messageCreate', async (message: Message) => {
 
 async function run() {
 	await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
-	client.login(token ?? ""); // provide your bot token
+	client.login(token); // provide your bot token
 }
 
 run();

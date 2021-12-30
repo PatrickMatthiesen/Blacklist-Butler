@@ -1,3 +1,6 @@
 {
-    "ignore": ["Blacklist.json"]
+    "ignore": [
+        "Blacklist.json",
+        "messageIds.json"
+    ]
 }

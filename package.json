@@ -7,7 +7,8 @@
     "build": "tsc",
     "dev": "node --trace-warnings --loader ts-node/esm/transpile-only src/index.ts",
     "start": "nodemon --exec node --loader ts-node/esm/transpile-only src/index.ts",
-    "serve": "node build/index.js"
+    "serve": "node build/index.js",
+    "lint": "eslint . --ext .ts"
   },
   "repository": {
     "type": "git",
@@ -31,6 +32,9 @@
   },
   "devDependencies": {
     "@types/node": "^16.11.11",
+    "@typescript-eslint/eslint-plugin": "^5.8.1",
+    "@typescript-eslint/parser": "^5.8.1",
+    "eslint": "^8.5.0",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.2"
   },
