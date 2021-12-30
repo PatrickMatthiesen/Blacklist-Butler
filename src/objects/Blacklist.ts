@@ -1,5 +1,4 @@
-import { channel } from 'diagnostics_channel';
-import { Channel, Message, TextBasedChannels, TextChannel } from "discord.js";
+import { Message, TextBasedChannels, TextChannel } from "discord.js";
 import * as fs from "fs";
 
 export class Blacklist {
@@ -173,7 +172,7 @@ export class Blacklist {
 
     private loadBlacklist() {
         try {
-            const data = fs.readFileSync('Blacklist.json', 'utf-8');
+            const data = fs.readFileSync('guilds\\' + (this.channel as TextChannel).guildId + '\\Blacklist.json', 'utf-8');
 
             // parse JSON object
             this.blacklist = new Map(JSON.parse(data)); // not posible if the file is empty
@@ -188,7 +187,7 @@ export class Blacklist {
 
     private loadMessageIds() {
         try {
-            const idMap = fs.readFileSync('messageIds.json', 'utf-8');
+            const idMap = fs.readFileSync('guilds\\' + (this.channel as TextChannel).guildId + '\\messageIds.json', 'utf-8');
 
             // parse JSON object
             this.oldMessages = new Map(JSON.parse(idMap)); // not posible if the file is empty
