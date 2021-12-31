@@ -1,36 +1,38 @@
 import { Message, TextBasedChannels, TextChannel } from "discord.js";
 import * as fs from "fs";
+import path from "path";
 
 export class Blacklist {
-
     private blacklist: Map<string, string[]>; // the content of the old messages
     private oldMessages: Map<string, Message>; //the old messages for editing the messages
     private toDelete: Message[]; //list of ids to delete
-    private refresh: boolean;
     private channel: TextBasedChannels;
+    private prefix: string;
 
-    constructor(toRefresh: boolean, channel: TextBasedChannels) {
+    constructor(channel: TextBasedChannels, blPrefix: string) {
         this.blacklist = new Map<string, string[]>();
         this.oldMessages = new Map<string, Message>();
         this.toDelete = [];
-        this.refresh = toRefresh;
         this.channel = channel;
+        this.prefix = blPrefix;
     }
 
     addOld(message: Message) {
         message.content.split('\n').forEach(name => this.add(name));
-        this.oldMessages.set(message.content.charAt(4), message);
+        this.oldMessages.set(message.content.charAt(this.prefix.length), message);
         if (message.author.id != '915952587273023508') { // if it isn't this bot that send the message then delete the message
             this.toDelete.push(message);
-            this.refresh = true;
         }
     }
 
     add(message: string) {
         let char: string;
 
-        if (new RegExp(`^--[A-Z]--`).test(message)) {
-            char = message.charAt(4).toLocaleUpperCase();
+        console.log('testing regex ' + (new RegExp(`^\\*\\*--`)).test(message));
+        
+
+        if (new RegExp(`^[\\*]*--[A-Z]`).test(message)) { //^[\\*]*--[A-Z]--
+            char = message.charAt(this.prefix.length).toLocaleUpperCase();
         } else char = message.charAt(0).toLocaleUpperCase();
 
         if (this.blacklist.has(char)) {
@@ -111,7 +113,7 @@ export class Blacklist {
 
     async sendAndSave(text: string) {
         const msg = await this.channel.send(text);
-        this.oldMessages.set(text.charAt(4), msg);
+        this.oldMessages.set(text.charAt(this.prefix.length), msg);
     }
 
     async cleanChat(includeOld = false) {
@@ -129,10 +131,6 @@ export class Blacklist {
         this.toDelete.push(msg);
     }
 
-    getRefresh(): boolean {
-        return this.refresh;
-    }
-
     sort() {
         this.blacklist = new Map([...this.blacklist].sort());
         this.blacklist.forEach(list => {
@@ -147,7 +145,7 @@ export class Blacklist {
 
     saveBlacklistToFile() {
         this.sort();
-        fs.writeFile('Blacklist.json', JSON.stringify([...this.blacklist], null, 4), err => {
+        fs.writeFile('./guilds/' + (this.channel as TextChannel).guildId + '/Blacklist.json', JSON.stringify([...this.blacklist], null, 4), err => {
             if (err) {
                 throw err;
             }
@@ -156,7 +154,7 @@ export class Blacklist {
     }
 
     saveMessageIdsToFile() {
-        fs.writeFileSync('messageIds.json', JSON.stringify([...this.oldMessages], null, 4));
+        fs.writeFileSync('./guilds/' + (this.channel as TextChannel).guildId + '/messageIds.json', JSON.stringify([...this.oldMessages], null, 4));
         // , (err: any) => {
         //     if (err) {
         //         throw err;
@@ -172,7 +170,7 @@ export class Blacklist {
 
     private loadBlacklist() {
         try {
-            const data = fs.readFileSync('guilds\\' + (this.channel as TextChannel).guildId + '\\Blacklist.json', 'utf-8');
+            const data = fs.readFileSync(path.resolve(process.cwd(),  './guilds/' + (this.channel as TextChannel).guildId + '/Blacklist.json'), 'utf-8');
 
             // parse JSON object
             this.blacklist = new Map(JSON.parse(data)); // not posible if the file is empty
@@ -187,8 +185,9 @@ export class Blacklist {
 
     private loadMessageIds() {
         try {
-            const idMap = fs.readFileSync('guilds\\' + (this.channel as TextChannel).guildId + '\\messageIds.json', 'utf-8');
-
+            const idMap = fs.readFileSync(path.resolve(process.cwd(),  './guilds/' + (this.channel as TextChannel).guildId + '/messageIds.json'), 'utf-8');
+            console.log((this.channel as TextChannel).guildId);
+            
             // parse JSON object
             this.oldMessages = new Map(JSON.parse(idMap)); // not posible if the file is empty
 
@@ -199,8 +198,12 @@ export class Blacklist {
         }
     }
 
-    isEmpty(): boolean {
+    isEmpty() {
         return this.blacklist.size == 0;
+    }
+
+    getPrefix() {
+        return this.prefix;
     }
 
 }
