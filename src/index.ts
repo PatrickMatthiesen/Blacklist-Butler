@@ -16,7 +16,7 @@ const client = new Client({
 	simpleCommand: {
 		prefix: "!"
 	},
-	classes: [`${dirname(import.meta.url)}/commands/**/*.{js,ts}`],
+	// classes: [`${dirname(import.meta.url)}/commands/**/*.{js,ts}`],
 	intents: [
 		Intents.FLAGS.GUILDS,
 		Intents.FLAGS.GUILD_MESSAGES

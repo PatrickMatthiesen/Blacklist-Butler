@@ -1,4 +1,4 @@
-import { CommandInteraction, Message, TextBasedChannels, TextChannel } from 'discord.js';
+import { CommandInteraction, Message, TextBasedChannel, TextChannel } from 'discord.js';
 import { Discord, Permission, Slash, SlashOption } from 'discordx';
 import path from 'path';
 import { Blacklist } from '../objects/Blacklist.js';
@@ -17,9 +17,9 @@ import * as fs from "fs";
 abstract class BlacklistButler {
     @Slash("add", { description: 'Adds the users to the blacklist' })
     async add(
-        @SlashOption('name', { description: 'name of person' })
+        @SlashOption('name', { description: 'name of person', required: false })
         name: string,
-        @SlashOption('old', { description: 'delete all messages and resend the blacklist to chat' }) // depricate this
+        @SlashOption('old', { description: 'delete all messages and resend the blacklist to chat', required: false }) // depricate this
         hasOldMessages: boolean = false,
         // @SlashChoice('One', 'one')
         // @SlashOption('amount', { description: 'add all or just one' })
@@ -85,7 +85,7 @@ abstract class BlacklistButler {
 
     @Slash("init", { description: 'Adds the users to the blacklist' })
     async init(
-        @SlashOption('adds', { description: 'delete all other messages before printing the list' })
+        @SlashOption('adds', { description: 'delete all other messages before printing the list', required: false })
         hasOldAdds: boolean = false,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
@@ -153,19 +153,19 @@ async function isBlacklistChannel(interaction: CommandInteraction) {
     return true;
 }
 
-async function addAllMessages(channel: TextBasedChannels, blacklist: Blacklist) {
+async function addAllMessages(channel: TextBasedChannel, blacklist: Blacklist) {
     await fetchAndHandle(channel, blacklist, true, true);
 }
 
-async function addNewMessages(channel: TextBasedChannels, blacklist: Blacklist) {
+async function addNewMessages(channel: TextBasedChannel, blacklist: Blacklist) {
     await fetchAndHandle(channel, blacklist, true);
 }
 
-async function addOldMessages(channel: TextBasedChannels, blacklist: Blacklist) {
+async function addOldMessages(channel: TextBasedChannel, blacklist: Blacklist) {
     await fetchAndHandle(channel, blacklist, false, true);
 }
 
-async function fetchAndHandle(channel: TextBasedChannels, blacklist: Blacklist, singles = false, old = false) {
+async function fetchAndHandle(channel: TextBasedChannel, blacklist: Blacklist, singles = false, old = false) {
     await channel.messages.fetch().then(messages => {
         console.log(`Received ${messages.size} messages`);
         //Iterate through the messages here with the variable "messages".
@@ -181,7 +181,7 @@ async function fetchAndHandle(channel: TextBasedChannels, blacklist: Blacklist, 
     });
 }
 
-async function deleteOld(channel: TextBasedChannels, blPrefix: string) {
+async function deleteOld(channel: TextBasedChannel, blPrefix: string) {
     await channel.messages.fetch().then(messages => {
         console.log(`Received ${messages.size} messages`);
         //Iterate through the messages here with the variable "messages".

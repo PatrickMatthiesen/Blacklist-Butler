@@ -1,4 +1,4 @@
-import { Message, TextBasedChannels, TextChannel } from "discord.js";
+import { Message, TextBasedChannel, TextChannel } from "discord.js";
 import * as fs from "fs";
 import path from "path";
 
@@ -6,10 +6,10 @@ export class Blacklist {
     private blacklist: Map<string, string[]>; // the content of the old messages
     private oldMessages: Map<string, Message>; //the old messages for editing the messages
     private toDelete: Message[]; //list of ids to delete
-    private channel: TextBasedChannels;
+    private channel: TextBasedChannel;
     private prefix: string;
 
-    constructor(channel: TextBasedChannels, blPrefix: string) {
+    constructor(channel: TextBasedChannel, blPrefix: string) {
         this.blacklist = new Map<string, string[]>();
         this.oldMessages = new Map<string, Message>();
         this.toDelete = [];
