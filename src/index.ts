@@ -21,7 +21,7 @@ const client = new Client({
 		Intents.FLAGS.GUILDS,
 		Intents.FLAGS.GUILD_MESSAGES
 	],
-	botGuilds: [guildId], //remmeber this for taler as it will have to be the ids of the guilds the bot is in
+	botGuilds: [guildId, '857279315753959424'], //remmeber this for taler as it will have to be the ids of the guilds the bot is in
 	silent: false //console logs: on/off
 });
 

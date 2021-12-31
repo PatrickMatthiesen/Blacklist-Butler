@@ -1,11 +1,18 @@
 import { CommandInteraction, Message, TextBasedChannels, TextChannel } from 'discord.js';
 import { Discord, Permission, Slash, SlashOption } from 'discordx';
+import path from 'path';
 import { Blacklist } from '../objects/Blacklist.js';
+import * as fs from "fs";
 
 
 
 @Permission(false)
-@Permission({ id: '923344421003591740', type: 'ROLE', permission: true })
+@Permission({ id: '923344421003591740', type: 'ROLE', permission: true }) // me on my server
+@Permission({ id: '857298384444457030', type: 'ROLE', permission: true }) //MA
+@Permission({ id: '857317419731386398', type: 'ROLE', permission: true }) //ancient
+@Permission({ id: '857319816770748426', type: 'ROLE', permission: true }) //elder
+@Permission({ id: '857321627879997471', type: 'ROLE', permission: true }) //vet
+@Permission({ id: '857380232285257749', type: 'ROLE', permission: true }) //mod jr
 @Discord()
 abstract class BlacklistButler {
     @Slash("add", { description: 'Adds the users to the blacklist' })
@@ -25,7 +32,10 @@ abstract class BlacklistButler {
             return;
         }
 
-        const blacklist = new Blacklist(hasOldMessages, interaction.channel);
+        const config = getGuildConfig(interaction);
+        const blPrefix = config?.get('blPrefix') ?? '**--';
+        console.log(blPrefix);
+        const blacklist = new Blacklist(interaction.channel, blPrefix);
         blacklist.loadFromFile();
 
         if (blacklist.isEmpty()) {
@@ -63,7 +73,10 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
         
-        const blacklist = new Blacklist(false, interaction.channel);
+        const config = getGuildConfig(interaction);
+        const blPrefix = config?.get('blPrefix') ?? '**--';
+        console.log(blPrefix);
+        const blacklist = new Blacklist(interaction.channel, blPrefix);
         blacklist.loadFromFile();
         blacklist.removeOne(name);
 
@@ -77,7 +90,11 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
         
-        const blacklist = new Blacklist(hasOldAdds, interaction.channel);
+        const config = getGuildConfig(interaction);
+        const blPrefix = config?.get('blPrefix') ?? 'dumdum';
+        console.log(blPrefix);
+        const blacklist = new Blacklist(interaction.channel, blPrefix);
+
         if (hasOldAdds) await addAllMessages(interaction.channel, blacklist);
         else await addOldMessages(interaction.channel, blacklist);
 
@@ -94,7 +111,11 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        const blacklist = new Blacklist(true, interaction.channel);
+        const config = getGuildConfig(interaction);
+        const blPrefix = config?.get('blPrefix') ?? '**--';
+        console.log(blPrefix);
+        
+        const blacklist = new Blacklist(interaction.channel, blPrefix);
         try {
             await blacklist.loadFromFile();
             console.log("read from file");
@@ -106,7 +127,8 @@ abstract class BlacklistButler {
 
         await interaction.deferReply({ ephemeral: true });
 
-        if (clean) await deleteOld(interaction.channel);
+
+        if (clean) await deleteOld(interaction.channel, blPrefix);
 
         await blacklist.writeToChat();
 
@@ -148,7 +170,7 @@ async function fetchAndHandle(channel: TextBasedChannels, blacklist: Blacklist, 
         console.log(`Received ${messages.size} messages`);
         //Iterate through the messages here with the variable "messages".
         messages.forEach(msg => {
-            if (old) {
+            if (old) { //old
                 addOld(msg, blacklist);
             }
             if (singles) {
@@ -159,12 +181,12 @@ async function fetchAndHandle(channel: TextBasedChannels, blacklist: Blacklist, 
     });
 }
 
-async function deleteOld(channel: TextBasedChannels) {
+async function deleteOld(channel: TextBasedChannels, blPrefix: string) {
     await channel.messages.fetch().then(messages => {
         console.log(`Received ${messages.size} messages`);
         //Iterate through the messages here with the variable "messages".
         messages.forEach(async msg => {
-            if (msg.content.startsWith('**--')) {
+            if (msg.content.startsWith(blPrefix)) {
                 await msg.delete();
             }
             console.log(msg.content);
@@ -172,8 +194,9 @@ async function deleteOld(channel: TextBasedChannels) {
     });
 }
 
-function addOld(msg: Message, blacklist: Blacklist) {
-    if (msg.content.startsWith('--')) {
+async function addOld(msg: Message, blacklist: Blacklist) {
+    // const { blPrefix } = await import("../../guilds/" + msg.guildId + "/config.json");
+    if (msg.content.startsWith(blacklist.getPrefix())) {
         blacklist.addOld(msg);
     }
 }
@@ -192,3 +215,20 @@ async function addSingles(msg: Message, blacklist: Blacklist) {
         blacklist.add(msg.content.slice(4));
     }
 }
+function getGuildConfig(interaction: CommandInteraction) {
+    try {
+        const configMap = fs.readFileSync(path.resolve(process.cwd(),  './guilds/' + interaction.guildId + '/config.json'), 'utf-8');
+        console.log(interaction.guildId);
+        
+        // parse JSON object
+        const map = new Map<string, string>(JSON.parse(configMap)); // not posible if the file is empty
+
+        console.log('the parsed messages map object:\n' + map);
+        map.forEach(key => console.log(key));
+
+        return map;
+    } catch (error) {
+        console.log(error);
+    }
+}
+

@@ -7,6 +7,7 @@
       "strict": true,
       "esModuleInterop": true,
       "moduleResolution": "Node",
+      "resolveJsonModule": true,
   
       /* Experimental Options */
       "experimentalDecorators": true /* Enables experimental support for ES7 decorators. */,
