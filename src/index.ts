@@ -16,24 +16,14 @@ const client = new Client({
 	simpleCommand: {
 		prefix: "!"
 	},
-	// classes: [`${dirname(import.meta.url)}/commands/**/*.{js,ts}`],
 	intents: [
 		Intents.FLAGS.GUILDS,
 		Intents.FLAGS.GUILD_MESSAGES
 	],
-	botGuilds: [guildId, '857279315753959424'], //remmeber this for taler as it will have to be the ids of the guilds the bot is in
+	botGuilds: [guildId, '857279315753959424'], //remmeber this for later as it will have to be the ids of the guilds the bot is in
 	silent: false //console logs: on/off
 });
 
-// client.commands = new Collection();
-// const commandFiles = fs.readdirSync('./commands').filter((file: string) => file.endsWith('.js'));
-
-// for (const file of commandFiles) {
-// 	const command = require(`./commands/${file}`);
-// 	// Set a new item in the Collection
-// 	// With the key as the command name and the value as the exported module
-// 	client.commands.set(command.data.name, command);
-// }
 
 // When the client is ready, run this code (only once)
 client.once('ready', async () => {
@@ -52,21 +42,6 @@ client.once('ready', async () => {
 client.on("interactionCreate", (interaction: Interaction) => {
 	client.executeInteraction(interaction);
 });
-
-// client.on('interactionCreate', async interaction => {
-// 	if (!interaction.isCommand()) return;
-
-// 	const command = client.commands.get(interaction.commandName);
-
-// 	if (!command) return;
-
-// 	try {
-// 		await command.execute(interaction, interaction.channel);
-// 	} catch (error) {
-// 		console.error(error);
-// 		await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-// 	}
-// });
 
 // has to be decorated with @SimpleCommand()
 // https://discord-ts.js.org/docs/decorators/commands/simplecommand/

@@ -28,7 +28,7 @@ export class Blacklist {
     add(message: string) {
         let char: string;
 
-        console.log('testing regex ' + (new RegExp(`^\\*\\*--`)).test(message));
+        console.log('testing regex ' + (new RegExp(`^[\\*]*--[A-Z]`)).test(message));
         
 
         if (new RegExp(`^[\\*]*--[A-Z]`).test(message)) { //^[\\*]*--[A-Z]--
@@ -136,11 +136,7 @@ export class Blacklist {
         this.blacklist.forEach(list => {
             list.sort((a, b) => a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase()));
         });
-        console.log('sorted the list');
-
-        // for (const item of this.blacklist.values()) {
-        //     item.sort((a, b) => a.toLocaleLowerCase().localeCompare(b.toLocaleLowerCase()));
-        // }
+        console.log('Sorted the Blacklist');
     }
 
     saveBlacklistToFile() {
@@ -176,8 +172,7 @@ export class Blacklist {
             this.blacklist = new Map(JSON.parse(data)); // not posible if the file is empty
 
             // print JSON object
-            console.log('the parsed messages map object:\n' + this.blacklist);
-            console.log(this.blacklist.get('A'));
+            console.log('the parsed messages map object: ' + this.blacklist);
         } catch (error) {
             console.log(error);
         }
@@ -192,7 +187,7 @@ export class Blacklist {
             this.oldMessages = new Map(JSON.parse(idMap)); // not posible if the file is empty
 
             // print JSON object
-            console.log('the parsed messages map object:\n' + this.blacklist);
+            console.log('the parsed messages map object: ' + this.blacklist);
         } catch (error) {
             console.log(error);
         }
