@@ -165,8 +165,15 @@ export class Blacklist {
     }
 
     private loadBlacklist() {
+
+        const listPath = './guilds/' + (this.channel as TextChannel).guildId + '/Blacklist.json';
+    
+        if (!fs.existsSync(listPath)) {
+            fs.writeFileSync(listPath, JSON.stringify([...new Map<string, string>()], null, 3));
+        }
+
         try {
-            const data = fs.readFileSync(path.resolve(process.cwd(),  './guilds/' + (this.channel as TextChannel).guildId + '/Blacklist.json'), 'utf-8');
+            const data = fs.readFileSync(path.resolve(process.cwd(),  listPath), 'utf-8');
 
             // parse JSON object
             this.blacklist = new Map(JSON.parse(data)); // not posible if the file is empty
@@ -179,8 +186,15 @@ export class Blacklist {
     }
 
     private loadMessageIds() {
+
+        const listPath = './guilds/' + (this.channel as TextChannel).guildId + '/messageIds.json';
+    
+        if (!fs.existsSync(listPath)) {
+            fs.writeFileSync(listPath, JSON.stringify([...new Map<string, string>()], null, 3));
+        }
+
         try {
-            const idMap = fs.readFileSync(path.resolve(process.cwd(),  './guilds/' + (this.channel as TextChannel).guildId + '/messageIds.json'), 'utf-8');
+            const idMap = fs.readFileSync(path.resolve(process.cwd(),  listPath), 'utf-8');
             console.log((this.channel as TextChannel).guildId);
             
             // parse JSON object
@@ -192,6 +206,13 @@ export class Blacklist {
             console.log(error);
         }
     }
+
+    initEmpty() {
+        for (const letter of 'ABCDEFGHIJKLMNOPQRSTUVWYXZ') {
+            this.blacklist.set(letter, [this.prefix + letter +  this.prefix.split('').reverse().join('')]);
+        } 
+    }
+
 
     isEmpty() {
         return this.blacklist.size == 0;

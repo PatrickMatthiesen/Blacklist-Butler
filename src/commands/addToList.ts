@@ -7,12 +7,18 @@ import * as fs from "fs";
 
 
 @Permission(false)
+//my server
 @Permission({ id: '923344421003591740', type: 'ROLE', permission: true }) // me on my server
+
+//Predators
 @Permission({ id: '857298384444457030', type: 'ROLE', permission: true }) //MA
 @Permission({ id: '857317419731386398', type: 'ROLE', permission: true }) //ancient
 @Permission({ id: '857319816770748426', type: 'ROLE', permission: true }) //elder
 @Permission({ id: '857321627879997471', type: 'ROLE', permission: true }) //vet
 @Permission({ id: '857380232285257749', type: 'ROLE', permission: true }) //mod jr
+
+//alliance 
+@Permission({ id: '899273212603539477', type: 'ROLE', permission: true }) //mod jr
 @Discord()
 abstract class BlacklistButler {
     @Slash("add", { description: 'Adds the users to the blacklist' })
@@ -71,7 +77,7 @@ abstract class BlacklistButler {
         name: string,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
-        
+
         const blPrefix = getGuildBlPrefix(interaction);
         const blacklist = new Blacklist(interaction.channel, blPrefix);
         blacklist.loadFromFile();
@@ -86,7 +92,7 @@ abstract class BlacklistButler {
         hasOldAdds: boolean = false,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
-        
+
         const blPrefix = getGuildBlPrefix(interaction);
         const blacklist = new Blacklist(interaction.channel, blPrefix);
 
@@ -107,16 +113,18 @@ abstract class BlacklistButler {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
         const blPrefix = getGuildBlPrefix(interaction);
-        
+
         const blacklist = new Blacklist(interaction.channel, blPrefix);
         try {
-            await blacklist.loadFromFile();
+            blacklist.loadFromFile();
             console.log("read from file");
         } catch (error) {
             console.log('fuck this');
             await interaction.reply({ content: 'something went wrong getting the blacklist', ephemeral: true });
             return;
         }
+        if (blacklist.isEmpty()) blacklist.initEmpty();
+        
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -206,10 +214,17 @@ async function addSingles(msg: Message, blacklist: Blacklist) {
     }
 }
 function getGuildConfig(interaction: CommandInteraction) {
+    const configPath = './guilds/' + interaction.guildId + '/config.json';
+    
+    if (!fs.existsSync(configPath)) {
+        const config = new Map<string, string>().set('blPrefix', '***--');
+        fs.writeFileSync(configPath, JSON.stringify([...config], null, 4));
+    }
+
     try {
-        const configMap = fs.readFileSync(path.resolve(process.cwd(),  './guilds/' + interaction.guildId + '/config.json'), 'utf-8');
+        const configMap = fs.readFileSync(path.resolve(process.cwd(), configPath), 'utf-8');
         console.log(interaction.guildId);
-        
+
         // parse JSON object
         const map = new Map<string, string>(JSON.parse(configMap)); // not posible if the file is empty
 
