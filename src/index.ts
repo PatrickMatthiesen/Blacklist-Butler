@@ -20,7 +20,7 @@ const client = new Client({
 		Intents.FLAGS.GUILDS,
 		Intents.FLAGS.GUILD_MESSAGES
 	],
-	botGuilds: [guildId, '857279315753959424'], //remmeber this for later as it will have to be the ids of the guilds the bot is in
+	botGuilds: [client => client.guilds.cache.map(g => g.id)], //new guilds wont have permissions nor will they have any commands as the bot will need a restart in its current state
 	silent: false //console logs: on/off
 });
 
