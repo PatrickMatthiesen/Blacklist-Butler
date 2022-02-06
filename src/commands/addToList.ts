@@ -1,6 +1,7 @@
 import { CommandInteraction, Message, TextBasedChannel, TextChannel } from 'discord.js';
 import { Discord, Permission, Slash, SlashOption } from 'discordx';
 import { Blacklist } from '../objects/Blacklist.js';
+import { setGuildBlPrefix } from '../objects/GuildDataHandler.js';
 import { CheckPermissions } from './permissionsCheck.js';
 
 
@@ -130,6 +131,17 @@ abstract class BlacklistButler {
         blacklist.saveMessageIdsToFile();
     }
 
+    @Slash("set-prefix", { description: 'set the prefix that formats the headers in the blacklist' })
+    async setPrefix(
+        @SlashOption('prefix', { description: 'a prefix like "--" for a header "--A--" or "***" for a bold and italics header' })
+        prefix: string,
+        interaction: CommandInteraction): Promise<void> {
+        if (!interaction.guildId) return;
+
+        if (setGuildBlPrefix(interaction.guildId, prefix))
+            await interaction.reply({ content: 'The headers will now look like ' + prefix + 'A' + prefix.split('').reverse().join(''), ephemeral: true });
+        else await interaction.reply({ content: 'something went wrong setting the prefix', ephemeral: true });
+    }
 }
 
 async function isBlacklistChannel(interaction: CommandInteraction) {
