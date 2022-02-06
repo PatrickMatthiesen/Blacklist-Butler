@@ -64,7 +64,9 @@ client.on('messageCreate', async (message: Message) => {
 
 async function run() {
 	await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
-	client.login(token); // provide your bot token
+	await client.login(token); // provide your bot token
 }
 
 run();
+
+export { client };

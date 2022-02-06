@@ -1,6 +1,7 @@
 import { ApplicationCommandPermissions, CommandInteraction, Guild, Role } from 'discord.js';
 import { Discord, Permission, Slash, SlashOption } from 'discordx';
 import { getConfig, getRoleIds, saveConfig } from '../objects/GuildDataHandler.js';
+import { client } from '../index.js';
 
 export async function CheckPermissions(guild: Guild): Promise<ApplicationCommandPermissions[]> {
     const roles: ApplicationCommandPermissions[] = [];
@@ -33,12 +34,12 @@ abstract class BlacklistButler {
             return;
         }
 
-
-        if (addRoleToconfig(interaction.guildId, role))
+        if (addRoleToconfig(interaction.guildId, role)){
             await interaction.reply({ content: `Gave ${role.toString()} access to admin commands`, ephemeral: true });
+            await client.initApplicationPermissions(true);
+        }
         else await interaction.reply({ content: 'something went wrong', ephemeral: true });
 
-        interaction.command?.permissions.add({ guild: interaction.guildId, permissions: [{ id: role.id, type: 'ROLE', permission: true }] });
     }
 
     @Slash("remove-admin-role", { description: 'add a role, to let the role use admin comands' })
@@ -53,10 +54,9 @@ abstract class BlacklistButler {
         const isRemoved = removeRoleFromConfig(interaction.guildId, role);
         if (isRemoved) {
             await interaction.reply({ content: `Removed admin command access for ${role.toString()}`, ephemeral: true });
+            await client.initApplicationPermissions(true);
         } else if (isRemoved === null) await interaction.reply({ content: 'The role was never added', ephemeral: true });
-        await interaction.reply({ content: 'something went wrong', ephemeral: true });
-
-        interaction.command?.permissions.remove({ guild: interaction.guildId, roles: role.id });
+        else await interaction.reply({ content: 'something went wrong', ephemeral: true });
     }
 
     @Slash("admin-roles", { description: 'Roles that has admin rights to this bot' })
@@ -94,12 +94,11 @@ function addRoleToconfig(guildId: string, role: Role) {
     if (!config) {
         return false;
     }
-    let newList;
+    let newList = null;
     if (config.has('roles')) {
         const roles = config.get('roles');
-        if (roles && !roles.includes(role.id))
+        if (roles && !roles.includes(role.id) && roles != '')
             newList = roles?.concat(',' + role.id);
-        else return true;
     }
     config.set('roles', newList ?? role.id);
     saveConfig(guildId, config);
