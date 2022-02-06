@@ -73,19 +73,27 @@ abstract class BlacklistButler {
 
     @Slash("init", { description: 'Adds the users to the blacklist' })
     async init(
-        @SlashOption('adds', { description: 'delete all other messages before printing the list', required: false })
+        @SlashOption('from-old-list', { description: 'use this option if you have an old list to init from' , required: false })
+        fromOldList: boolean = false,
+        @SlashOption('has-old', { description: '(require "from-old-list = true") if messages like "add `name`" should be added to the list', required: false })
         hasOldAdds: boolean = false,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
         const blacklist = new Blacklist(interaction.channel);
 
-        if (hasOldAdds) await addAllMessages(interaction.channel, blacklist);
-        else await addOldMessages(interaction.channel, blacklist);
+        if (fromOldList) {
+            if (hasOldAdds) await addAllMessages(interaction.channel, blacklist);
+            else await addOldMessages(interaction.channel, blacklist);    
+            await interaction.reply({ content: 'stored your list' + (hasOldAdds ? ' and added extras' : '') + ' to the database', ephemeral: true });
 
+        } else {
+            blacklist.initEmpty();
+            await interaction.reply({ content: 'I inited the list for you, now just print it :)', ephemeral: true });
+        }
+        
         blacklist.saveBlacklistToFile();
 
-        await interaction.reply({ content: 'stored your list' + (hasOldAdds ? ' and added extras' : '') + ' to the database', ephemeral: true });
     }
 
 
