@@ -1,5 +1,6 @@
 // Require the necessary discord.js classes
 // const { Client, Collection, Intents } = require('discord.js');
+import "reflect-metadata";
 import { Intents, Interaction, Message } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
@@ -8,8 +9,6 @@ import * as dotenv from "dotenv";
 // get secrets
 dotenv.config();
 const token = process.env.DISCORD_TOKEN ?? '';
-//const clientId = process.env.CLIENT_ID;
-const guildId = process.env.GUILD_ID ?? '';
 
 // Create a new client instance
 const client = new Client({
@@ -27,8 +26,6 @@ const client = new Client({
 
 // When the client is ready, run this code (only once)
 client.once('ready', async () => {
-	//const Guilds = client.guilds.cache.map(guild => guild.id); // get the ids of all atached guilds
-
 	// to create/update/delete discord application commands
 	await client.initApplicationCommands({
 		global: { log: true },
