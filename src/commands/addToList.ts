@@ -129,6 +129,9 @@ abstract class BlacklistButler {
         blacklist.saveMessageIdsToFile();
     }
 
+    //if you really dont have a life, then make it so it removes all the category headers and add on the new ones
+    //either just use the funktion that have been made (simpe but might be a litte performance heavy?),
+    // or make a better one for this usecase (which might be a bad idea as it is a waste of time and code space)
     @Slash("set-prefix", { description: 'set the prefix that formats the headers in the blacklist' })
     async setPrefix(
         @SlashOption('prefix', { description: 'a prefix like "--" for a header "--A--" or "***" for a bold and italics header' })

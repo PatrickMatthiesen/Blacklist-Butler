@@ -27,11 +27,7 @@ export class Blacklist {
     }
 
     add(message: string) {
-        let char: string;
-
-        if (new RegExp(`^[\\*]*--[A-Z]`).test(message)) { //^[\\*]*--[A-Z]--
-            char = message.charAt(this.prefix.length).toLocaleUpperCase();
-        } else char = message.charAt(0).toLocaleUpperCase();
+        const char = this.getChar(message);
 
         if (this.blacklist.has(char)) {
             this.blacklist.get(char)?.push(message);
@@ -47,7 +43,7 @@ export class Blacklist {
         this.add(name);
         this.sort();
 
-        const char = name.charAt(0).toUpperCase();
+        const char = this.getChar(name);
 
         await this.updateMessage(char);
 
@@ -62,7 +58,7 @@ export class Blacklist {
         this.remove(name);
         this.sort();
 
-        const char = name.charAt(0).toUpperCase();
+        const char = this.getChar(name);
 
         await this.updateMessage(char);
 
@@ -102,6 +98,7 @@ export class Blacklist {
 
     async writeToChat() {
         this.sort();
+        this.oldMessages = new Map;
         for (const item of this.blacklist.values()) {
             const joined = item.join('\n');
             await this.sendAndSave(joined);
@@ -199,6 +196,12 @@ export class Blacklist {
         } catch (error) {
             console.log(error);
         }
+    }
+
+    private getChar(message: string){
+        if (new RegExp(`^${this.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[A-Z]`).test(message)) { //^[\\*]*--[A-Z]--
+            return message.charAt(this.prefix.length).toLocaleUpperCase();
+        } else return message.charAt(0).toLocaleUpperCase();
     }
 
     initEmpty() {
