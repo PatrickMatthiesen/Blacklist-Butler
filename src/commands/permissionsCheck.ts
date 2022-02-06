@@ -18,11 +18,6 @@ export async function CheckPermissions(guild: Guild): Promise<ApplicationCommand
 @Permission(guild => CheckPermissions(guild))
 @Discord()
 abstract class BlacklistButler {
-    // @Slash("permissiontest", { description: 'can use if you have admin' })
-    // async testPermission(
-    //     interaction: CommandInteraction): Promise<void> {
-    //     await interaction.reply({ content: 'you can do it', ephemeral: true });
-    // }
 
     @Slash("add-admin-role", { description: 'add a role, to let the role use admin comands' })
     async addAdminRole(

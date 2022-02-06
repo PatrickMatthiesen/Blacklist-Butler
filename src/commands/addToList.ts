@@ -100,7 +100,7 @@ abstract class BlacklistButler {
 
     @Slash("print", { description: 'Prints the blacklist to the channel' })
     async print(
-        @SlashOption('clean', { description: 'delete all other messages before printing the list' })
+        @SlashOption('clean', { description: 'delete all other messages before printing the list', required: false })
         clean: boolean = false,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
@@ -117,7 +117,7 @@ abstract class BlacklistButler {
         if (blacklist.isEmpty()) blacklist.initEmpty();
 
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ ephemeral: true }); //needed as writeing takes a long time
 
 
         if (clean) await deleteOld(interaction.channel, blacklist.getPrefix());
@@ -125,8 +125,6 @@ abstract class BlacklistButler {
         await blacklist.writeToChat();
 
         await interaction.editReply({ content: 'printet list' });
-
-
 
         blacklist.saveMessageIdsToFile();
     }
