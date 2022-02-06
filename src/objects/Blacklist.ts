@@ -1,6 +1,7 @@
 import { Message, TextBasedChannel, TextChannel } from "discord.js";
 import * as fs from "fs";
 import path from "path";
+import { getGuildBlPrefix } from "./GuildDataHandler.js";
 
 export class Blacklist {
     private blacklist: Map<string, string[]>; // the content of the old messages
@@ -9,12 +10,12 @@ export class Blacklist {
     private channel: TextBasedChannel;
     private prefix: string;
 
-    constructor(channel: TextBasedChannel, blPrefix: string) {
+    constructor(channel: TextBasedChannel) {
         this.blacklist = new Map<string, string[]>();
         this.oldMessages = new Map<string, Message>();
         this.toDelete = [];
         this.channel = channel;
-        this.prefix = blPrefix;
+        this.prefix = getGuildBlPrefix((channel as TextChannel).guildId);
     }
 
     addOld(message: Message) {
@@ -27,9 +28,6 @@ export class Blacklist {
 
     add(message: string) {
         let char: string;
-
-        console.log('testing regex ' + (new RegExp(`^[\\*]*--[A-Z]`)).test(message));
-        
 
         if (new RegExp(`^[\\*]*--[A-Z]`).test(message)) { //^[\\*]*--[A-Z]--
             char = message.charAt(this.prefix.length).toLocaleUpperCase();
@@ -151,11 +149,7 @@ export class Blacklist {
 
     saveMessageIdsToFile() {
         fs.writeFileSync('./guilds/' + (this.channel as TextChannel).guildId + '/messageIds.json', JSON.stringify([...this.oldMessages], null, 4));
-        // , (err: any) => {
-        //     if (err) {
-        //         throw err;
-        //     }
-        // });
+
         console.log("message ids is saved as JSON data");
     }
 
@@ -169,7 +163,7 @@ export class Blacklist {
         const listPath = './guilds/' + (this.channel as TextChannel).guildId + '/Blacklist.json';
     
         if (!fs.existsSync(listPath)) {
-            fs.writeFileSync(listPath, JSON.stringify([...new Map<string, string>()], null, 3));
+            fs.writeFileSync(listPath, JSON.stringify([...new Map<string, string[]>()], null, 3));
         }
 
         try {
@@ -190,7 +184,7 @@ export class Blacklist {
         const listPath = './guilds/' + (this.channel as TextChannel).guildId + '/messageIds.json';
     
         if (!fs.existsSync(listPath)) {
-            fs.writeFileSync(listPath, JSON.stringify([...new Map<string, string>()], null, 3));
+            fs.writeFileSync(listPath, JSON.stringify([...new Map<string, string[]>()], null, 3));
         }
 
         try {
@@ -221,5 +215,4 @@ export class Blacklist {
     getPrefix() {
         return this.prefix;
     }
-
 }

@@ -1,8 +1,6 @@
 import { CommandInteraction, Message, TextBasedChannel, TextChannel } from 'discord.js';
 import { Discord, Permission, Slash, SlashOption } from 'discordx';
-import path from 'path';
 import { Blacklist } from '../objects/Blacklist.js';
-import * as fs from "fs";
 
 
 
@@ -38,9 +36,7 @@ abstract class BlacklistButler {
             return;
         }
 
-
-        const blPrefix = getGuildBlPrefix(interaction);
-        const blacklist = new Blacklist(interaction.channel, blPrefix);
+        const blacklist = new Blacklist(interaction.channel);
         blacklist.loadFromFile();
 
         if (blacklist.isEmpty()) {
@@ -78,8 +74,7 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        const blPrefix = getGuildBlPrefix(interaction);
-        const blacklist = new Blacklist(interaction.channel, blPrefix);
+        const blacklist = new Blacklist(interaction.channel);
         blacklist.loadFromFile();
         blacklist.removeOne(name);
 
@@ -93,8 +88,7 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        const blPrefix = getGuildBlPrefix(interaction);
-        const blacklist = new Blacklist(interaction.channel, blPrefix);
+        const blacklist = new Blacklist(interaction.channel);
 
         if (hasOldAdds) await addAllMessages(interaction.channel, blacklist);
         else await addOldMessages(interaction.channel, blacklist);
@@ -112,9 +106,7 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        const blPrefix = getGuildBlPrefix(interaction);
-
-        const blacklist = new Blacklist(interaction.channel, blPrefix);
+        const blacklist = new Blacklist(interaction.channel);
         try {
             blacklist.loadFromFile();
             console.log("read from file");
@@ -124,12 +116,12 @@ abstract class BlacklistButler {
             return;
         }
         if (blacklist.isEmpty()) blacklist.initEmpty();
-        
+
 
         await interaction.deferReply({ ephemeral: true });
 
 
-        if (clean) await deleteOld(interaction.channel, blPrefix);
+        if (clean) await deleteOld(interaction.channel, blacklist.getPrefix());
 
         await blacklist.writeToChat();
 
@@ -212,35 +204,5 @@ async function addSingles(msg: Message, blacklist: Blacklist) {
 
         blacklist.add(msg.content.slice(4));
     }
-}
-function getGuildConfig(interaction: CommandInteraction) {
-    const configPath = './guilds/' + interaction.guildId + '/config.json';
-    
-    if (!fs.existsSync(configPath)) {
-        const config = new Map<string, string>().set('blPrefix', '***--');
-        fs.writeFileSync(configPath, JSON.stringify([...config], null, 4));
-    }
-
-    try {
-        const configMap = fs.readFileSync(path.resolve(process.cwd(), configPath), 'utf-8');
-        console.log(interaction.guildId);
-
-        // parse JSON object
-        const map = new Map<string, string>(JSON.parse(configMap)); // not posible if the file is empty
-
-        console.log('The parsed guild config map object: ' + map);
-
-
-        return map;
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-function getGuildBlPrefix(interaction: CommandInteraction) {
-    const config = getGuildConfig(interaction);
-    const blPrefix = config?.get('blPrefix') ?? '**--';
-    console.log(blPrefix);
-    return blPrefix;
 }
 
