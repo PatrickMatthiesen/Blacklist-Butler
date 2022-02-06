@@ -1,22 +1,12 @@
 import { CommandInteraction, Message, TextBasedChannel, TextChannel } from 'discord.js';
 import { Discord, Permission, Slash, SlashOption } from 'discordx';
 import { Blacklist } from '../objects/Blacklist.js';
+import { CheckPermissions } from './permissionsCheck.js';
 
 
 
 @Permission(false)
-//my server
-@Permission({ id: '923344421003591740', type: 'ROLE', permission: true }) // me on my server
-
-//Predators
-@Permission({ id: '857298384444457030', type: 'ROLE', permission: true }) //MA
-@Permission({ id: '857317419731386398', type: 'ROLE', permission: true }) //ancient
-@Permission({ id: '857319816770748426', type: 'ROLE', permission: true }) //elder
-@Permission({ id: '857321627879997471', type: 'ROLE', permission: true }) //vet
-@Permission({ id: '857380232285257749', type: 'ROLE', permission: true }) //mod jr
-
-//alliance 
-@Permission({ id: '899273212603539477', type: 'ROLE', permission: true }) //mod jr
+@Permission(guild => CheckPermissions(guild))
 @Discord()
 abstract class BlacklistButler {
     @Slash("add", { description: 'Adds the users to the blacklist' })
