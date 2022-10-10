@@ -1,27 +1,30 @@
-import { ApplicationCommandPermissions, CommandInteraction, Guild, Role } from 'discord.js';
-import { Discord, Permission, Slash, SlashOption } from 'discordx';
+import { ApplicationCommandPermissions, ApplicationCommandPermissionType, CommandInteraction, Guild, PermissionsBitField, Role, ApplicationCommandOptionType } from 'discord.js';
+import { Discord, Guard, Slash, SlashOption } from 'discordx';
 import { getConfig, getRoleIds, saveConfig } from '../objects/GuildDataHandler.js';
 import { client } from '../index.js';
+import { PermissionGuard, PermissionsType } from '@discordx/utilities';
 
-export async function CheckPermissions(guild: Guild): Promise<ApplicationCommandPermissions[]> {
+export async function CheckPermissions(guild: Guild): Promise<PermissionsType> {
     const roles: ApplicationCommandPermissions[] = [];
     const configRoleIds = getRoleIds(guild.id);
 
     for (const role of guild.roles.cache.values()) {
-        if (role.permissions.has('ADMINISTRATOR', true) || configRoleIds.includes(role.id))
-            roles.push({ id: role.id, type: 'ROLE', permission: true });
+        if (role.permissions.has(PermissionsBitField.Flags.Administrator, true) || configRoleIds.includes(role.id))
+            roles.push({ id: role.id, type: ApplicationCommandPermissionType.Role, permission: true });
+            role.permissions.
     }
+    roles.forEach(role => role.id })
+
     return roles;
 }
 
-@Permission(false)
-@Permission(guild => CheckPermissions(guild))
+@Guard(PermissionGuard(["Administrator"]))
 @Discord()
 abstract class BlacklistButler {
 
-    @Slash("add-admin-role", { description: 'add a role, to let the role use admin comands' })
+    @Slash({ name: 'add-admin-role', description: 'add a role, to let the role use admin comands' })
     async addAdminRole(
-        @SlashOption('role', { description: 'role to add' })
+        @SlashOption({ name: 'role', description: 'role to add', type: ApplicationCommandOptionType.Role })
         role: Role,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.guildId) {
@@ -31,15 +34,15 @@ abstract class BlacklistButler {
 
         if (addRoleToconfig(interaction.guildId, role)){
             await interaction.reply({ content: `Gave ${role.toString()} access to admin commands`, ephemeral: true });
-            await client.initApplicationPermissions(true);
+            // await client.initApplicationPermissions(true);
         }
         else await interaction.reply({ content: 'something went wrong', ephemeral: true });
 
     }
 
-    @Slash("remove-admin-role", { description: 'add a role, to let the role use admin comands' })
+    @Slash({ name: 'remove-admin-role', description: 'add a role, to let the role use admin comands' })
     async removeAdminRole(
-        @SlashOption('role', { description: 'role to remove' })
+        @SlashOption({ name: 'role', description: 'role to remove', type: ApplicationCommandOptionType.Role })
         role: Role,
         interaction: CommandInteraction): Promise<void> { // if role is not there say that, otherwise do the do
         if (!interaction.guildId) {
@@ -49,12 +52,12 @@ abstract class BlacklistButler {
         const isRemoved = removeRoleFromConfig(interaction.guildId, role);
         if (isRemoved) {
             await interaction.reply({ content: `Removed admin command access for ${role.toString()}`, ephemeral: true });
-            await client.initApplicationPermissions(true);
+            // await client.initApplicationPermissions(true);
         } else if (isRemoved === null) await interaction.reply({ content: 'The role was never added', ephemeral: true });
         else await interaction.reply({ content: 'something went wrong', ephemeral: true });
     }
 
-    @Slash("admin-roles", { description: 'Roles that has admin rights to this bot' })
+    @Slash({ name: 'admin-roles', description: 'Roles that has admin rights to this bot' })
     async adminRoles(
         interaction: CommandInteraction): Promise<void> { // if role is not there say that, otherwise do the do
         if (!interaction.guildId || !interaction.guild) {
@@ -68,7 +71,7 @@ abstract class BlacklistButler {
         let configRoles = '';
 
         for (const role of interaction.guild.roles.cache.values()) {
-            if (role.permissions.has('ADMINISTRATOR', true))
+            if (role.permissions.has(PermissionsBitField.Flags.Administrator, true))
                 adminRoles += '    ' + role.toString() + '\n';
             else if (configRoleIds.includes(role.id))
                 configRoles += '    ' + role.toString() + '\n';

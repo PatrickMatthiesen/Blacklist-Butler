@@ -1,20 +1,17 @@
-import { CommandInteraction, Message, TextBasedChannel, TextChannel } from 'discord.js';
-import { Discord, Permission, Slash, SlashOption } from 'discordx';
+import { ApplicationCommandOptionType, CommandInteraction, Message, TextBasedChannel, TextChannel } from 'discord.js';
+import { Discord, Slash, SlashOption } from 'discordx';
 import { Blacklist } from '../objects/Blacklist.js';
 import { setGuildBlPrefix } from '../objects/GuildDataHandler.js';
-import { CheckPermissions } from './permissionsCheck.js';
 
 
 
-@Permission(false)
-@Permission(guild => CheckPermissions(guild))
 @Discord()
 abstract class BlacklistButler {
-    @Slash("add", { description: 'Adds the users to the blacklist' })
+    @Slash({ name: 'add', description: 'Adds the users to the blacklist' })
     async add(
-        @SlashOption('name', { description: 'name of person', required: false })
+        @SlashOption({ name: 'name', description: 'name of person', required: false, type: ApplicationCommandOptionType.String })
         name: string,
-        @SlashOption('old', { description: 'delete all messages and resend the blacklist to chat', required: false }) // depricate this
+        @SlashOption({ name: 'old', description: 'delete all messages and resend the blacklist to chat', required: false, type: ApplicationCommandOptionType.Boolean }) // depricate this
         hasOldMessages: boolean = false,
         // @SlashChoice('One', 'one')
         // @SlashOption('amount', { description: 'add all or just one' })
@@ -58,9 +55,9 @@ abstract class BlacklistButler {
         blacklist.saveBlacklistToFile();
     }
 
-    @Slash("remove", { description: 'Adds the users to the blacklist' })
+    @Slash({name: 'remove' , description: 'Removes the user from the blacklist' })
     async remove(
-        @SlashOption('name', { description: 'name to remove' })
+        @SlashOption({name: 'name', description: 'name to remove', type: ApplicationCommandOptionType.String})
         name: string,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
@@ -72,11 +69,11 @@ abstract class BlacklistButler {
         await interaction.reply({ content: 'name has been removed', ephemeral: true });
     }
 
-    @Slash("init", { description: 'Adds the users to the blacklist' })
+    @Slash({ name: 'init', description: 'Adds the users to the blacklist' })
     async init(
-        @SlashOption('from-old-list', { description: 'use this option if you have an old list to init from' , required: false })
+        @SlashOption({ name: 'from-old-list', description: 'use this option if you have an old list to init from' , required: false, type: ApplicationCommandOptionType.String })
         fromOldList: boolean = false,
-        @SlashOption('has-old', { description: '(require "from-old-list = true") if messages like "add `name`" should be added to the list', required: false })
+        @SlashOption({ name: 'has-old', description: '(require "from-old-list = true") if messages like "add `name`" should be added to the list', required: false, type: ApplicationCommandOptionType.String })
         hasOldAdds: boolean = false,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
@@ -98,9 +95,9 @@ abstract class BlacklistButler {
     }
 
 
-    @Slash("print", { description: 'Prints the blacklist to the channel' })
+    @Slash({ name: 'print', description: 'Prints the blacklist to the channel' })
     async print(
-        @SlashOption('clean', { description: 'delete all other messages before printing the list', required: false })
+        @SlashOption({ name: 'clean', description: 'delete all other messages before printing the list', required: false, type: ApplicationCommandOptionType.String })
         clean: boolean = false,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
@@ -132,9 +129,9 @@ abstract class BlacklistButler {
     //if you really dont have a life, then make it so it removes all the category headers and add on the new ones
     //either just use the funktion that have been made (simpe but might be a litte performance heavy?),
     // or make a better one for this usecase (which might be a bad idea as it is a waste of time and code space)
-    @Slash("set-prefix", { description: 'set the prefix that formats the headers in the blacklist' })
+    @Slash({ name: 'set-prefix', description: 'set the prefix that formats the headers in the blacklist' })
     async setPrefix(
-        @SlashOption('prefix', { description: 'a prefix like "--" for a header "--A--" or "***" for a bold and italics header' })
+        @SlashOption({ name: 'prefix', description: 'a prefix like "--" for a header "--A--" or "***" for a bold and italics header', type: ApplicationCommandOptionType.String })
         prefix: string,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.guildId) return;
@@ -171,7 +168,7 @@ async function fetchAndHandle(channel: TextBasedChannel, blacklist: Blacklist, s
     await channel.messages.fetch().then(messages => {
         console.log(`Received ${messages.size} messages`);
         //Iterate through the messages here with the variable "messages".
-        messages.forEach(msg => {
+        messages.forEach((msg: Message<boolean>) => {
             if (old) { //old
                 addOld(msg, blacklist);
             }
@@ -187,7 +184,7 @@ async function deleteOld(channel: TextBasedChannel, blPrefix: string) {
     await channel.messages.fetch().then(messages => {
         console.log(`Received ${messages.size} messages`);
         //Iterate through the messages here with the variable "messages".
-        messages.forEach(async msg => {
+        messages.forEach(async (msg: Message<boolean>) => {
             if (msg.content.startsWith(blPrefix)) {
                 await msg.delete();
             }

@@ -1,10 +1,12 @@
+import { ApplicationCommandPermissions } from 'discord.js';
 // Require the necessary discord.js classes
 // const { Client, Collection, Intents } = require('discord.js');
 import "reflect-metadata";
-import { Intents, Interaction, Message } from "discord.js";
+import { Interaction, Message, IntentsBitField  } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
 import * as dotenv from "dotenv";
+
 
 // get secrets
 dotenv.config();
@@ -16,12 +18,14 @@ const client = new Client({
 		prefix: "!"
 	},
 	intents: [
-		Intents.FLAGS.GUILDS,
-		Intents.FLAGS.GUILD_MESSAGES
+		IntentsBitField.Flags.Guilds,
+		IntentsBitField.Flags.GuildMembers,
+		IntentsBitField.Flags.GuildMessages,
 	],
 	botGuilds: [client => client.guilds.cache.map(g => g.id)], //new guilds wont have permissions nor will they have any commands as the bot will need a restart in its current state
 	silent: false //console logs: on/off
 });
+
 
 
 // When the client is ready, run this code (only once)
@@ -31,7 +35,7 @@ client.once('ready', async () => {
 		global: { log: true },
 		guild: { log: true }
 	});
-	await client.initApplicationPermissions(true);
+	// client.initApplicationPermissions(true);
 
 	console.log("Bot started!");
 });
