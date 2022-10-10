@@ -1,25 +1,40 @@
 import { ApplicationCommandPermissions, ApplicationCommandPermissionType, CommandInteraction, Guild, PermissionsBitField, Role, ApplicationCommandOptionType } from 'discord.js';
-import { Discord, Guard, Slash, SlashOption } from 'discordx';
+import { ArgsOf, Discord, Guard, GuardFunction, Slash, SlashOption } from 'discordx';
 import { getConfig, getRoleIds, saveConfig } from '../objects/GuildDataHandler.js';
-import { client } from '../index.js';
-import { PermissionGuard, PermissionsType } from '@discordx/utilities';
 
-export async function CheckPermissions(guild: Guild): Promise<PermissionsType> {
+export async function CheckPermissions(guild: Guild): Promise<ApplicationCommandPermissions[]> {
     const roles: ApplicationCommandPermissions[] = [];
     const configRoleIds = getRoleIds(guild.id);
 
     for (const role of guild.roles.cache.values()) {
         if (role.permissions.has(PermissionsBitField.Flags.Administrator, true) || configRoleIds.includes(role.id))
             roles.push({ id: role.id, type: ApplicationCommandPermissionType.Role, permission: true });
-            role.permissions.
     }
-    roles.forEach(role => role.id })
 
     return roles;
 }
 
-@Guard(PermissionGuard(["Administrator"]))
+export const NotBot: GuardFunction<CommandInteraction> = async (
+    interaction,
+    client,
+    next
+) => {
+    var guild = interaction.guild;
+    const configRoleIds = getRoleIds(guild.id);
+
+    for (const role of guild.roles.cache.values()) {
+        if (role.permissions.has(PermissionsBitField.Flags.Administrator, true) || configRoleIds.includes(role.id))
+            
+    }
+    client.user.c
+}
+if (client.user.id !== interaction.user.id) {
+    await next();
+}
+};
+
 @Discord()
+@Guard(NotBot)
 abstract class BlacklistButler {
 
     @Slash({ name: 'add-admin-role', description: 'add a role, to let the role use admin comands' })
@@ -32,7 +47,7 @@ abstract class BlacklistButler {
             return;
         }
 
-        if (addRoleToconfig(interaction.guildId, role)){
+        if (addRoleToconfig(interaction.guildId, role)) {
             await interaction.reply({ content: `Gave ${role.toString()} access to admin commands`, ephemeral: true });
             // await client.initApplicationPermissions(true);
         }

@@ -1,6 +1,4 @@
-import { ApplicationCommandPermissions } from 'discord.js';
 // Require the necessary discord.js classes
-// const { Client, Collection, Intents } = require('discord.js');
 import "reflect-metadata";
 import { Interaction, Message, IntentsBitField  } from "discord.js";
 import { Client } from "discordx";
@@ -35,7 +33,6 @@ client.once('ready', async () => {
 		global: { log: true },
 		guild: { log: true }
 	});
-	// client.initApplicationPermissions(true);
 
 	console.log("Bot started!");
 });
