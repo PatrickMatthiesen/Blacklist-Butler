@@ -1,11 +1,13 @@
-import { ApplicationCommandOptionType, CommandInteraction, Message, TextBasedChannel, TextChannel } from 'discord.js';
-import { Discord, Slash, SlashOption } from 'discordx';
+import { ApplicationCommandOptionType, CommandInteraction, Message, TextBasedChannel, TextChannel, PermissionsBitField } from 'discord.js';
+import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
 import { Blacklist } from '../objects/Blacklist.js';
 import { setGuildBlPrefix } from '../objects/GuildDataHandler.js';
 
 
 
 @Discord()
+@SlashGroup({ description: 'Manage Blacklist', name: 'blacklist', defaultMemberPermissions: [PermissionsBitField.Flags.ManageGuild, PermissionsBitField.Flags.Administrator] })
+@SlashGroup('blacklist')
 abstract class BlacklistButler {
     @Slash({ name: 'add', description: 'Adds the users to the blacklist' })
     async add(
@@ -55,9 +57,9 @@ abstract class BlacklistButler {
         blacklist.saveBlacklistToFile();
     }
 
-    @Slash({name: 'remove' , description: 'Removes the user from the blacklist' })
+    @Slash({ name: 'remove', description: 'Removes the user from the blacklist' })
     async remove(
-        @SlashOption({name: 'name', description: 'name to remove', type: ApplicationCommandOptionType.String})
+        @SlashOption({ name: 'name', description: 'name to remove', type: ApplicationCommandOptionType.String })
         name: string,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
@@ -71,7 +73,7 @@ abstract class BlacklistButler {
 
     @Slash({ name: 'init', description: 'Adds the users to the blacklist' })
     async init(
-        @SlashOption({ name: 'from-old-list', description: 'use this option if you have an old list to init from' , required: false, type: ApplicationCommandOptionType.String })
+        @SlashOption({ name: 'from-old-list', description: 'use this option if you have an old list to init from', required: false, type: ApplicationCommandOptionType.String })
         fromOldList: boolean = false,
         @SlashOption({ name: 'has-old', description: '(require "from-old-list = true") if messages like "add `name`" should be added to the list', required: false, type: ApplicationCommandOptionType.String })
         hasOldAdds: boolean = false,
@@ -82,14 +84,14 @@ abstract class BlacklistButler {
 
         if (fromOldList) {
             if (hasOldAdds) await addAllMessages(interaction.channel, blacklist);
-            else await addOldMessages(interaction.channel, blacklist);    
+            else await addOldMessages(interaction.channel, blacklist);
             await interaction.reply({ content: 'stored your list' + (hasOldAdds ? ' and added extras' : '') + ' to the database', ephemeral: true });
 
         } else {
             blacklist.initEmpty();
             await interaction.reply({ content: 'I inited the list for you, now just print it :)', ephemeral: true });
         }
-        
+
         blacklist.saveBlacklistToFile();
 
     }
