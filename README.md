@@ -28,9 +28,14 @@ Go to a link bellow and pick the server you want to add the bot to.
 
 ## How to make a blacklist channel
 
-1. Make a channel that is named 'blacklist'.
-2. (optional) set a prefix with /set-prefix, don't recommend doing it later.
-3. Use the /print command (recommend not sending any options).
+1. Make a channel named `blacklist`.
+2. (optional) set a prefix with command `/blacklist set-prefix`
+   1. Don't recommend doing it later, as support hasn't been added so the blacklist is updated.
+3. Init the list with `/blacklist inti`.
+   1. if the chat has an old blacklist, then use the option `has-old-list` set to `true`.
+   2. If the list should be initialized with additions, then use the option `has-old` set to `true`. Messages in the channel should be in the format `add <name>` to be added on initialization.
+4. Use the `/blacklist print` command (recommend not sending any options).
+   1. `clean` set true, will remove an old list if exists.
 
 ## How to add and remove names
 
