@@ -1,13 +1,15 @@
 {
     "compilerOptions": {
       "target": "ESNext",
-      "module": "ESNext",
+      "module": "NodeNext",
       "outDir": "./build",
       "rootDir": "./src",
       "strict": true,
       "esModuleInterop": true,
-      "moduleResolution": "Node",
+      "moduleResolution": "NodeNext",
       "resolveJsonModule": true,
+      "lib": ["ESNext"],
+      "types": ["bun-types"],
   
       /* Experimental Options */
       "experimentalDecorators": true /* Enables experimental support for ES7 decorators. */,

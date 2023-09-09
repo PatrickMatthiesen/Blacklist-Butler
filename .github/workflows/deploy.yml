@@ -1,0 +1,48 @@
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+    install-dependencies:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v2
+      
+          - name: Setup Bun
+            uses: oven-sh/setup-bun@v1
+            
+          - name: bun install
+            run: bun install
+
+          - name: Upload artifact for deployment job
+            uses: actions/upload-artifact@v2
+            with:
+              name: blacklist-butler
+              path: .
+    
+    deploy:
+        runs-on: ubuntu-latest
+        needs: install-dependencies
+        environment:
+          name: 'production'
+          url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    
+        steps:
+          - name: Download artifact from build job
+            uses: actions/download-artifact@v2
+            with:
+              name: blacklist-butler
+    
+          - name: 'Deploy to Azure Web App'
+            id: deploy-to-webapp
+            uses: azure/webapps-deploy@v2
+            with:
+              app-name: 'blacklist-butler'
+              slot-name: 'production'
+              publish-profile: ${{ secrets.AzureAppService_PublishProfile }}
+              package: .

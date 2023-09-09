@@ -3,11 +3,8 @@ import "reflect-metadata";
 import { Interaction, Message, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
-import * as dotenv from "dotenv";
 
-
-// get secrets
-dotenv.config();
+// set client token
 const token = process.env.DISCORD_TOKEN ?? '';
 
 // Create a new client instance
@@ -31,10 +28,7 @@ client.once('ready', async () => {
 	await client.guilds.fetch();
 
 	// to create/update/delete discord application commands
-	await client.initApplicationCommands({
-		global: { log: true },
-		guild: { log: true }
-	});
+	await client.initApplicationCommands();
 
 	console.log("Bot started!");
 });
@@ -54,6 +48,6 @@ async function run() {
 	await client.login(token); // provide your bot token
 }
 
-run();
+await run();
 
 export { client };

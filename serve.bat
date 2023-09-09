@@ -1,1 +1,1 @@
-npm run serve
+bun src/index.ts
