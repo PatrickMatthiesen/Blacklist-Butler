@@ -21,7 +21,16 @@ const client = new Client({
 	silent: false //console logs: on/off
 });
 
-
+Bun.serve({
+	fetch(): Response | Promise<Response> {
+		const message = client.isReady() ? 'Hi i should be running' : 'I am trying to start up...';
+		return new Response(message);
+	},
+	
+  
+	// Optional port number - the default value is 3000
+	port: process.env.PORT || 3000
+});
 
 // When the client is ready, run this code (only once)
 client.once('ready', async () => {
