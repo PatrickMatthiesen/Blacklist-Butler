@@ -1,6 +1,5 @@
 import { BlacklistStore } from '../interfaces/blacklist-store.js';
 import { getStorage, Storage } from "firebase-admin/storage";
-import { getApps, initializeApp } from "firebase-admin/app";
 import { Message } from 'discord.js';
 
 export class FirebaseBlacklistStore implements BlacklistStore {
@@ -9,8 +8,6 @@ export class FirebaseBlacklistStore implements BlacklistStore {
 
     constructor(guildId: string) {
         this.folderPath = `guilds/${guildId}`;
-        if (getApps().length == 0)
-            initializeApp();
 
         this.store = getStorage();
     }

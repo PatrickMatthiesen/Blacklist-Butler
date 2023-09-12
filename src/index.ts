@@ -3,6 +3,7 @@ import "reflect-metadata";
 import { Interaction, Message, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
+import { initializeApp } from "firebase-admin/app";
 
 // set client token
 const token = process.env.DISCORD_TOKEN ?? '';
@@ -46,6 +47,8 @@ client.on('messageCreate', async (message: Message) => {
 async function run() {
 	await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
 	await client.login(token); // provide your bot token
+	if (process.env.STORE_TYPE == 'firebase') 
+		initializeApp();
 }
 
 await run();
