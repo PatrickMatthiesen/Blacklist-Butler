@@ -2,6 +2,9 @@ import { ApplicationCommandOptionType, CommandInteraction, Message, TextBasedCha
 import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
 import { Blacklist } from '../objects/Blacklist.js';
 import { setGuildBlPrefix } from '../objects/GuildDataHandler.js';
+import { LocalBlacklistStore } from '../objects/local-blacklist-store.js';
+import { FirebaseBlacklistStore } from '../Firebase/firebase-blacklist-store.js';
+import { BlacklistStore } from '../interfaces/blacklist-store.js';
 
 
 
@@ -14,7 +17,7 @@ abstract class BlacklistButler {
         @SlashOption({ name: 'name', description: 'name of person', required: false, type: ApplicationCommandOptionType.String })
         name: string,
         @SlashOption({ name: 'old', description: 'delete all messages and resend the blacklist to chat', required: false, type: ApplicationCommandOptionType.Boolean }) // depricate this
-        hasOldMessages: boolean = false,
+        hasOldMessages = false,
         // @SlashChoice('One', 'one')
         // @SlashOption('amount', { description: 'add all or just one' })
         // amount: string,
@@ -25,13 +28,15 @@ abstract class BlacklistButler {
             await interaction.reply({ content: 'please add a name or ask me to add old messages starting with "add "', ephemeral: true });
             return;
         }
+        await interaction.deferReply({ ephemeral: true });
 
-        const blacklist = new Blacklist(interaction.channel);
-        blacklist.loadFromFile();
+        const store = await getStore(interaction.guildId!);
+        const blacklist = new Blacklist(interaction.channel, store);
+        await blacklist.init();
 
         if (blacklist.isEmpty()) {
             console.log('blacklist is empty');
-            await interaction.reply({ content: 'something went wrong getting the blacklist', ephemeral: true });
+            await interaction.editReply({ content: 'something went wrong getting the blacklist' });
             return;
         }
 
@@ -42,7 +47,7 @@ abstract class BlacklistButler {
 
         if (name && !hasOldMessages) {
             if (!await blacklist.addOne(name)) {
-                await interaction.reply({ content: 'something went wrong adding the name', ephemeral: true });
+                await interaction.editReply({ content: 'something went wrong adding the name' });
                 return;
             }
         } else blacklist.add(name);
@@ -53,46 +58,53 @@ abstract class BlacklistButler {
 
         await blacklist.cleanChat();
 
-        await interaction.reply({ content: `${name ? 'added ' + name : ''}${hasOldMessages ? ' and added extra from chat' : ''}`, ephemeral: true });
-        blacklist.saveBlacklistToFile();
+        await interaction.editReply({ content: `${name ? 'added ' + name : ''}${hasOldMessages ? ' and added extra from chat' : ''}` });
+        blacklist.saveBlacklist();
     }
 
-    @Slash({ name: 'remove', description: 'Removes the user from the blacklist' })
+    @Slash({ name: 'remove', description: 'Removes a user from the blacklist' })
     async remove(
         @SlashOption({ name: 'name', description: 'name to remove', type: ApplicationCommandOptionType.String })
         name: string,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        const blacklist = new Blacklist(interaction.channel);
-        blacklist.loadFromFile();
-        blacklist.removeOne(name);
+        await interaction.deferReply({ ephemeral: true });
 
-        await interaction.reply({ content: 'name has been removed', ephemeral: true });
+        const store = await getStore(interaction.guildId!);
+        const blacklist = new Blacklist(interaction.channel, store);
+        await blacklist.init();
+
+        await blacklist.removeOne(name);
+
+        await interaction.editReply({ content: 'name has been removed' });
     }
 
     @Slash({ name: 'init', description: 'Adds the users to the blacklist' })
     async init(
         @SlashOption({ name: 'from-old-list', description: 'use this option if you have an old list to init from', required: false, type: ApplicationCommandOptionType.String })
-        fromOldList: boolean = false,
+        fromOldList = false,
         @SlashOption({ name: 'has-old', description: '(require "from-old-list = true") if messages like "add `name`" should be added to the list', required: false, type: ApplicationCommandOptionType.String })
-        hasOldAdds: boolean = false,
+        hasOldAdds = false,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        const blacklist = new Blacklist(interaction.channel);
+        await interaction.deferReply({ ephemeral: true });
+
+        const store = await getStore(interaction.guildId!);
+        const blacklist = new Blacklist(interaction.channel, store);
 
         if (fromOldList) {
             if (hasOldAdds) await addAllMessages(interaction.channel, blacklist);
             else await addOldMessages(interaction.channel, blacklist);
-            await interaction.reply({ content: 'stored your list' + (hasOldAdds ? ' and added extras' : '') + ' to the database', ephemeral: true });
+            await interaction.editReply({ content: 'stored your list' + (hasOldAdds ? ' and added extras' : '') + ' to the database' });
 
         } else {
             blacklist.initEmpty();
-            await interaction.reply({ content: 'I inited the list for you, now just print it :)', ephemeral: true });
+            await interaction.editReply({ content: 'I inited the list for you, now just print it :)' });
         }
 
-        blacklist.saveBlacklistToFile();
+        blacklist.saveBlacklist();
 
     }
 
@@ -100,24 +112,25 @@ abstract class BlacklistButler {
     @Slash({ name: 'print', description: 'Prints the blacklist to the channel' })
     async print(
         @SlashOption({ name: 'clean', description: 'delete all other messages before printing the list', required: false, type: ApplicationCommandOptionType.String })
-        clean: boolean = false,
+        clean = false,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        const blacklist = new Blacklist(interaction.channel);
+        await interaction.deferReply({ ephemeral: true });
+
+        const store = await getStore(interaction.guildId!);
+        const blacklist = new Blacklist(interaction.channel, store);
         try {
-            blacklist.loadFromFile();
-            console.log("read from file");
+            blacklist.init();
+            console.log("read from store");
         } catch (error) {
             console.log('fuck this');
-            await interaction.reply({ content: 'something went wrong getting the blacklist', ephemeral: true });
+            await interaction.editReply({ content: 'something went wrong getting the blacklist' });
             return;
         }
+
+        // make an empty blacklist
         if (blacklist.isEmpty()) blacklist.initEmpty();
-
-
-        await interaction.deferReply({ ephemeral: true }); //needed as writeing takes a long time
-
 
         if (clean) await deleteOld(interaction.channel, blacklist.getPrefix());
 
@@ -125,7 +138,7 @@ abstract class BlacklistButler {
 
         await interaction.editReply({ content: 'printet list' });
 
-        blacklist.saveMessageIdsToFile();
+        blacklist.saveMessages();
     }
 
     //if you really dont have a life, then make it so it removes all the category headers and add on the new ones
@@ -138,20 +151,24 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.guildId) return;
 
-        if (setGuildBlPrefix(interaction.guildId, prefix))
-            await interaction.reply({ content: 'The headers will now look like ' + prefix + 'A' + prefix.split('').reverse().join(''), ephemeral: true });
-        else await interaction.reply({ content: 'something went wrong setting the prefix', ephemeral: true });
+        await interaction.deferReply({ ephemeral: true });
+
+        const store = await getStore(interaction.guildId!);
+
+        if (await setGuildBlPrefix(interaction.guildId, prefix, store))
+            await interaction.editReply({ content: 'The headers will now look like ' + prefix + 'A' + prefix.split('').reverse().join('') });
+        else await interaction.editReply({ content: 'something went wrong setting the prefix' });
     }
 }
 
 async function isBlacklistChannel(interaction: CommandInteraction) {
-    if ((interaction.channel as TextChannel).name !== 'blacklist') {
-        console.log('channel was not a blacklist');
-        await interaction.reply({ content: 'channel is not a blacklist', ephemeral: true });
-        return false;
+    if ((interaction.channel as TextChannel).name == 'blacklist') {
+        return true;
     }
-
-    return true;
+    
+    console.log('channel was not a blacklist');
+    await interaction.reply({ content: 'channel is not a blacklist', ephemeral: true });
+    return false;
 }
 
 async function addAllMessages(channel: TextBasedChannel, blacklist: Blacklist) {
@@ -216,3 +233,9 @@ async function addSingles(msg: Message, blacklist: Blacklist) {
     }
 }
 
+async function getStore(guildId: string): Promise<BlacklistStore> {
+    if (process.env.STORE_TYPE == 'firebase')
+        return new FirebaseBlacklistStore(guildId);
+
+    return new LocalBlacklistStore(guildId);
+}
