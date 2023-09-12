@@ -20,26 +20,26 @@ export class FirebaseBlacklistStore implements BlacklistStore {
     }
 
     async loadBlacklist(): Promise<Map<string, string[]>> {
-        const file = await this.store.bucket().file(`${this.folderPath}/Blacklist.json`).download();
-        const fileContent = file[0].toString();
+        const [contents] = await this.store.bucket().file(`${this.folderPath}/Blacklist.json`).download();
+        const fileContent = contents.toString();
         return new Map(JSON.parse(fileContent));
     }
 
     async loadMessages(): Promise<Map<string, Message>> {
-        const file = await this.store.bucket().file(`${this.folderPath}/messages.json`).download();
-        const fileContent = file[0].toString();
+        const [contents] = await this.store.bucket().file(`${this.folderPath}/messages.json`).download();
+        const fileContent = contents.toString();
         return new Map(JSON.parse(fileContent));
     }
 
     async loadConfig(): Promise<Map<string, string>> {
-        const file = await this.store.bucket().file(`${this.folderPath}/config.json`).download();
-        const fileContent = file[0].toString();
+        const [contents] = await this.store.bucket().file(`${this.folderPath}/config.json`).download();
+        const fileContent = contents.toString();
         return new Map(JSON.parse(fileContent));
     }
 
     async loadByName(name: string): Promise<string | null> {
-        const file = await this.store.bucket().file(`${this.folderPath}/${name}.json`).download();
-        return file[0].toString();
+        const [contents] = await this.store.bucket().file(`${this.folderPath}/${name}.json`).download();
+        return contents.toString();
     }
 
     async save(blacklist: Map<string, string[]>, messages: Map<string, Message>) {
@@ -51,6 +51,7 @@ export class FirebaseBlacklistStore implements BlacklistStore {
         const file = this.store.bucket().file(`${this.folderPath}/Blacklist.json`);
         await file.save(JSON.stringify([...blacklist], null, 4), {
             gzip: true,
+            contentType: 'application/json'
         });
     }
 
@@ -58,6 +59,7 @@ export class FirebaseBlacklistStore implements BlacklistStore {
         const file = this.store.bucket().file(`${this.folderPath}/messages.json`);
         await file.save(JSON.stringify([...messages], null, 4), {
             gzip: true,
+            contentType: 'application/json'
         });
     }
 
@@ -65,11 +67,15 @@ export class FirebaseBlacklistStore implements BlacklistStore {
         const file = this.store.bucket().file(`${this.folderPath}/config.json`);
         await file.save(JSON.stringify([...config], null, 4), {
             gzip: true,
+            contentType: 'application/json'
         });
     }
 
     async saveByName(name: string, data: string | Buffer) {
         const file = this.store.bucket().file(`${this.folderPath}/${name}.json`);
-        await file.save(data);
+        await file.save(data, { 
+            gzip: true, 
+            contentType: 'application/json' 
+        });
     }
 }
