@@ -234,7 +234,7 @@ async function addSingles(msg: Message, blacklist: Blacklist) {
 }
 
 async function getStore(guildId: string): Promise<BlacklistStore> {
-    if (process.env.STORE_TYPE == 'firebase')
+    if (process.env.STORE_TYPE == 'firebase' || process.env.GOOGLE_APPLICATION_CREDENTIALS)
         return new FirebaseBlacklistStore(guildId);
 
     return new LocalBlacklistStore(guildId);

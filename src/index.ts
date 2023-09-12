@@ -56,8 +56,10 @@ client.on('messageCreate', async (message: Message) => {
 async function run() {
 	await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
 	await client.login(token); // provide your bot token
-	if (process.env.STORE_TYPE == 'firebase') 
-		initializeApp();
+	if (process.env.STORE_TYPE == 'firebase' && process.env.GOOGLE_APPLICATION_CREDENTIALS) 
+		initializeApp({
+			credential:	JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS)
+		});
 }
 
 await run();
