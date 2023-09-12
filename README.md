@@ -30,7 +30,8 @@ Go to a link bellow and pick the server you want to add the bot to.
 
 1. Make a channel named `blacklist`.
 2. (optional) set a prefix with command `/blacklist set-prefix`
-   1. Don't recommend doing it later, as support hasn't been added so the blacklist is updated.
+   1. A prefix is a string that will be added to the start of the header of the message.
+   2. Don't recommend doing it later, as support hasn't been added so the blacklist is updated.
 3. Init the list with `/blacklist inti`.
    1. if the chat has an old blacklist, then use the option `has-old-list` set to `true`.
    2. If the list should be initialized with additions, then use the option `has-old` set to `true`. Messages in the channel should be in the format `add <name>` to be added on initialization.
