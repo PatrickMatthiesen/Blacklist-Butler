@@ -27,6 +27,11 @@ jobs:
           - name: bun install
             run: bun install --production
 
+          - name: make env file
+            run: echo $GOOGLE_CREDENTIALS > google_credentials.json
+            env:
+                GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
           - name: 'Deploy to Azure Web App'
             id: deploy-to-webapp
             uses: azure/webapps-deploy@v2
