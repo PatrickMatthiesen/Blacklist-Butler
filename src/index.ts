@@ -3,7 +3,7 @@ import "reflect-metadata";
 import { Interaction, Message, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
-import { initializeApp } from "firebase-admin/app";
+import { applicationDefault, AppOptions, initializeApp } from "firebase-admin/app";
 
 // set client token
 const token = process.env.DISCORD_TOKEN ?? '';
@@ -56,8 +56,20 @@ client.on('messageCreate', async (message: Message) => {
 async function run() {
 	await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
 	await client.login(token); // provide your bot token
-	if (process.env.STORE_TYPE == 'firebase' && process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-		initializeApp();
+	if (process.env.STORE_TYPE == 'firebase') {  // && process.env.GOOGLE_APPLICATION_CREDENTIALS
+		var config: AppOptions = {};
+		if (process.env.FIREBASE_CONFIG) {
+			config = JSON.parse(process.env.FIREBASE_CONFIG);
+		} else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+			config = {
+				credential: applicationDefault(),
+				storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+			};
+		} else {
+			console.error('Store_Type is firebase, but No firebase config could be found');
+			console.error('Please provide either FIREBASE_CONFIG or GOOGLE_APPLICATION_CREDENTIALS and FIREBASE_STORAGE_BUCKET');
+		}
+		initializeApp(config);
 	}
 }
 

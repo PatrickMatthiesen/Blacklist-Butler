@@ -19,27 +19,34 @@ export class FirebaseBlacklistStore implements BlacklistStore {
         };
     }
 
+    private async loadFromFirebase(path: string): Promise<string> {
+        const file = this.store.bucket().file(path);
+        const fileUrl = await file.getSignedUrl({
+            action: "read",
+            expires: Date.now() + 1000 * 60 // 1 minute
+          })
+          const fileContent = await (await Bun.fetch(fileUrl[0])).text();
+        return fileContent;
+    }
+
     async loadBlacklist(): Promise<Map<string, string[]>> {
-        const [contents] = await this.store.bucket().file(`${this.folderPath}/Blacklist.json`).download();
-        const fileContent = contents.toString();
-        return new Map(JSON.parse(fileContent));
+        const data = await this.loadFromFirebase(`${this.folderPath}/Blacklist.json`);
+        return new Map<string, string[]>(JSON.parse(data));
     }
 
     async loadMessages(): Promise<Map<string, Message>> {
-        const [contents] = await this.store.bucket().file(`${this.folderPath}/messages.json`).download();
-        const fileContent = contents.toString();
-        return new Map(JSON.parse(fileContent));
+        const data = await this.loadFromFirebase(`${this.folderPath}/messages.json`);
+        return new Map<string, Message>(JSON.parse(data));
     }
 
     async loadConfig(): Promise<Map<string, string>> {
-        const [contents] = await this.store.bucket().file(`${this.folderPath}/config.json`).download();
-        const fileContent = contents.toString();
-        return new Map(JSON.parse(fileContent));
+        const data = await this.loadFromFirebase(`${this.folderPath}/config.json`);
+        return new Map<string, string>(JSON.parse(data));
     }
 
     async loadByName(name: string): Promise<string | null> {
-        const [contents] = await this.store.bucket().file(`${this.folderPath}/${name}.json`).download();
-        return contents.toString();
+        const data = await this.loadFromFirebase(`${this.folderPath}/${name}.json`);
+        return data;
     }
 
     async save(blacklist: Map<string, string[]>, messages: Map<string, Message>) {
