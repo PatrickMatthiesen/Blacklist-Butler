@@ -24,7 +24,7 @@ export class FirebaseBlacklistStore implements BlacklistStore {
         const fileUrl = await file.getSignedUrl({
             action: "read",
             expires: Date.now() + 1000 * 60 // 1 minute
-          })
+          });
           const fileContent = await (await Bun.fetch(fileUrl[0])).text();
         return fileContent;
     }

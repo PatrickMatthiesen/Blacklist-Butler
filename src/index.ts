@@ -57,7 +57,7 @@ async function run() {
 	await importx(dirname(import.meta.url) + "/{events,commands}/**/*.{ts,js}");
 	await client.login(token); // provide your bot token
 	if (process.env.STORE_TYPE == 'firebase') {  // && process.env.GOOGLE_APPLICATION_CREDENTIALS
-		var config: AppOptions = {};
+		let config: AppOptions = {};
 		if (process.env.FIREBASE_CONFIG) {
 			config = JSON.parse(process.env.FIREBASE_CONFIG);
 		} else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {

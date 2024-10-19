@@ -4,11 +4,9 @@
   "description": "Blacklist manager",
   "main": "index.ts",
   "scripts": {
-    "build": "tsc",
-    "dev": "node --trace-warnings --loader ts-node/esm/transpile-only src/index.ts",
+    "dev": "bun src/index.ts --watch",
     "start": "bun src/index.ts",
-    "serve": "node build/index.js",
-    "lint": "eslint . --ext .ts"
+    "lint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -30,6 +28,7 @@
   },
   "devDependencies": {
     "@types/bun": "1.1.11",
+    "@typescript-eslint/eslint-plugin": "^8.10.0",
     "eslint": "9.13.0"
   },
   "type": "module"

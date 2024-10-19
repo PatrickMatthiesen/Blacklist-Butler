@@ -124,7 +124,7 @@ abstract class BlacklistButler {
             blacklist.init();
             console.log("read from store");
         } catch (error) {
-            console.log('fuck this');
+            console.log('fuck this', error);
             await interaction.editReply({ content: 'something went wrong getting the blacklist' });
             return;
         }
