@@ -64,7 +64,7 @@ abstract class BlacklistButler {
 
     @Slash({ name: 'remove', description: 'Removes a user from the blacklist' })
     async remove(
-        @SlashOption({ name: 'name', description: 'name to remove', type: ApplicationCommandOptionType.String })
+        @SlashOption({ name: 'name', description: 'name to remove', required: true, type: ApplicationCommandOptionType.String })
         name: string,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;

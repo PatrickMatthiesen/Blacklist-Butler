@@ -68,5 +68,5 @@ jobs:
           app-name: 'blacklist-butler'
           slot-name: 'Production'
           package: ${{ github.workspace }}/release.zip
-          startup-command: 'npm run env -- bun run src/index.ts'
+          startup-command: 'npm run env -- bun --bun run src/index.ts'
           
