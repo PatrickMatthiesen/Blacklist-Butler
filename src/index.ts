@@ -27,8 +27,7 @@ Bun.serve({
 		const message = client.isReady() ? 'Hi i should be running' : 'I am trying to start up...';
 		return new Response(message);
 	},
-	
-  
+
 	// Optional port number - the default value is 3000
 	port: process.env.PORT || 3000
 });
@@ -58,16 +57,20 @@ async function run() {
 	await client.login(token); // provide your bot token
 	if (process.env.STORE_TYPE == 'firebase') {  // && process.env.GOOGLE_APPLICATION_CREDENTIALS
 		let config: AppOptions = {};
+		console.log('Store_Type is firebase');
+		// console.log('FIREBASE_CONFIG', process.env.FIREBASE_CONFIG);
 		if (process.env.FIREBASE_CONFIG) {
+			console.log('Using FIREBASE_CONFIG');
 			config = JSON.parse(process.env.FIREBASE_CONFIG);
 		} else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+			console.log('Using GOOGLE_APPLICATION_CREDENTIALS and FIREBASE_STORAGE_BUCKET');
 			config = {
 				credential: applicationDefault(),
 				storageBucket: process.env.FIREBASE_STORAGE_BUCKET
 			};
 		} else {
 			console.error('Store_Type is firebase, but No firebase config could be found');
-			console.error('Please provide either FIREBASE_CONFIG or GOOGLE_APPLICATION_CREDENTIALS and FIREBASE_STORAGE_BUCKET');
+			console.error('Please provide either (FIREBASE_CONFIG) or (GOOGLE_APPLICATION_CREDENTIALS and FIREBASE_STORAGE_BUCKET)');
 		}
 		initializeApp(config);
 	}

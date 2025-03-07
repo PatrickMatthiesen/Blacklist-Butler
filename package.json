@@ -27,7 +27,7 @@
     "bun": "1.2.4",
     "discord.js": "14.18.0",
     "discordx": "11.12.2",
-    "firebase-admin": "13.1.0",
+    "firebase-admin": "13.2.0",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {
