@@ -2,8 +2,8 @@
 import "reflect-metadata";
 import { Interaction, Message, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
-import { dirname, importx } from "@discordx/importer";
-import { applicationDefault, AppOptions, initializeApp } from "firebase-admin/app";
+import { importx } from "@discordx/importer";
+import { applicationDefault, initializeApp } from "firebase-admin/app";
 
 // set client token
 const token = process.env.DISCORD_TOKEN ?? '';
