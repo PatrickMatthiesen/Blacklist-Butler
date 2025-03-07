@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, CommandInteraction, Message, TextBasedChannel, TextChannel, PermissionsBitField } from 'discord.js';
+import { ApplicationCommandOptionType, CommandInteraction, Message, TextBasedChannel, TextChannel, PermissionsBitField, MessageFlags } from 'discord.js';
 import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
 import { Blacklist } from '../objects/Blacklist.js';
 import { setGuildBlPrefix } from '../objects/GuildDataHandler.js';
@@ -25,10 +25,10 @@ abstract class BlacklistButler {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
         if (!name && !hasOldMessages) {
-            await interaction.reply({ content: 'please add a name or ask me to add old messages starting with "add "', ephemeral: true });
+            await interaction.reply({ content: 'please add a name or ask me to add old messages starting with "add "', flags: MessageFlags.Ephemeral });
             return;
         }
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
@@ -69,7 +69,7 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
@@ -89,7 +89,7 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
@@ -116,7 +116,7 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
@@ -151,7 +151,7 @@ abstract class BlacklistButler {
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.guildId) return;
 
-        await interaction.deferReply({ ephemeral: true });
+        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
 
@@ -165,9 +165,9 @@ async function isBlacklistChannel(interaction: CommandInteraction) {
     if ((interaction.channel as TextChannel).name == 'blacklist') {
         return true;
     }
-    
+
     console.log('channel was not a blacklist');
-    await interaction.reply({ content: 'channel is not a blacklist', ephemeral: true });
+    await interaction.reply({ content: 'channel is not a blacklist', flags: MessageFlags.Ephemeral });
     return false;
 }
 

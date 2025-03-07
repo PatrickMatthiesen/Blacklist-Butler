@@ -18,16 +18,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Node.js version
-        uses: actions/setup-node@v3
-        with:
-          node-version: '22.x'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+      
+      - name: bun install
+        run: bun install --production
 
-      - name: npm install, build, and test
-        run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+      - name: make env file
+        run: echo $GOOGLE_CREDENTIALS > google_credentials.json
+        env:
+            GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
 
       - name: Zip artifact for deployment
         run: zip release.zip ./* -r
@@ -35,7 +35,7 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
+          name: bun-app
           path: release.zip
 
   deploy:
@@ -52,7 +52,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: bun-app
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
