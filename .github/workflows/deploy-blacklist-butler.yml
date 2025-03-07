@@ -1,0 +1,81 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy Node.js app to Azure Web App - blacklist-butler
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deploy-blacklist-butler.yml"
+      - "src/**"
+      - "package.json"
+      - "bun.lock"
+  workflow_dispatch:
+
+# Add concurrency control to ensure only one deployment runs at a time
+concurrency:
+  group: "production-deploy"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: bun install
+        run: bun install --production
+
+      - name: make env file
+        run: echo $GOOGLE_CREDENTIALS > google_credentials.json
+        env:
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Zip artifact for deployment
+        run: zip release.zip ./* -r
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: blacklist-butler
+          path: release.zip
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: "Production"
+      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+    permissions:
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: blacklist-butler
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D54930EB37934388883A6BE45EFB5196 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9980C5A9305B4BB4AC7CEF3B9B79E8A5 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_50C4242D5E4547628720C38D393C9792 }}
+
+      - name: "Deploy to Azure Web App"
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "blacklist-butler"
+          slot-name: "Production"
+          package: ${{ github.workspace }}/release.zip
+          startup-command: "npm run env -- bun --bun run src/index.ts"

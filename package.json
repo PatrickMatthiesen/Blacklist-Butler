@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "bun src/index.ts --watch",
     "start": "bun src/index.ts",
-    "lint": "eslint .",
+    "lint": "eslint",
     "docker:build": "docker build -t blacklist-butler .",
     "docker:run": "docker run -d -p 3000:3000 --name blacklist-butler blacklist-butler",
     "docker:stop": "docker stop blacklist-butler",
@@ -32,8 +32,8 @@
   },
   "devDependencies": {
     "@types/bun": "1.2.4",
-    "@typescript-eslint/eslint-plugin": "^8.26.0",
-    "eslint": "9.21.0"
+    "@eslint/js": "^9.21.0",
+    "typescript-eslint": "^8.26.0"
   },
   "type": "module"
 }
