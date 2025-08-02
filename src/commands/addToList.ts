@@ -14,18 +14,13 @@ import { BlacklistStore } from '../interfaces/blacklist-store.js';
 abstract class BlacklistButler {
     @Slash({ name: 'add', description: 'Adds the users to the blacklist' })
     async add(
-        @SlashOption({ name: 'name', description: 'name of person', required: false, type: ApplicationCommandOptionType.String })
+        @SlashOption({ name: 'name', description: 'name of person', required: true, type: ApplicationCommandOptionType.String })
         name: string,
-        @SlashOption({ name: 'old', description: 'delete all messages and resend the blacklist to chat', required: false, type: ApplicationCommandOptionType.Boolean }) // depricate this
-        hasOldMessages = false,
-        // @SlashChoice('One', 'one')
-        // @SlashOption('amount', { description: 'add all or just one' })
-        // amount: string,
         interaction: CommandInteraction): Promise<void> {
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
-        if (!name && !hasOldMessages) {
-            await interaction.reply({ content: 'please add a name or ask me to add old messages starting with "add "', flags: MessageFlags.Ephemeral });
+        if (!name) {
+            await interaction.reply({ content: 'please add a name', flags: MessageFlags.Ephemeral });
             return;
         }
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
@@ -40,25 +35,16 @@ abstract class BlacklistButler {
             return;
         }
 
-        if (hasOldMessages) {
-            await addNewMessages(interaction.channel, blacklist);
-            console.log("read from file and added new");
-        }
-
-        if (name && !hasOldMessages) {
+        if (name) {
             if (!await blacklist.addOne(name)) {
                 await interaction.editReply({ content: 'something went wrong adding the name' });
                 return;
             }
         } else blacklist.add(name);
 
-        if (hasOldMessages) {
-            await blacklist.updateAllMessages();
-        }
-
         await blacklist.cleanChat();
 
-        await interaction.editReply({ content: `${name ? 'added ' + name : ''}${hasOldMessages ? ' and added extra from chat' : ''}` });
+        await interaction.editReply({ content: `added ${name}` });
         blacklist.saveBlacklist();
     }
 
