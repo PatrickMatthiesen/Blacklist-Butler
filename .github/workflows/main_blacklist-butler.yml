@@ -1,17 +1,14 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - blacklist-butler
+name: Build and deploy Blacklist butler
 
 on:
-  # push:
-    # branches:
-    #   - main
-    # paths:
-    #   - ".github/workflows/deploy-blacklist-butler.yml"
-    #   - "src/**"
-    #   - "package.json"
-    #   - "bun.lock"
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/main_blacklist-butler.yml"
+      - "src/**"
+      - "package.json"
+      - "bun.lock"
   workflow_dispatch:
 
 # Add concurrency control to ensure only one deployment runs at a time
@@ -59,18 +56,19 @@ jobs:
         with:
           name: blacklist-butler
 
-      - name: Login to Azure
-        uses: azure/login@v2
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v3
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_D54930EB37934388883A6BE45EFB5196 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9980C5A9305B4BB4AC7CEF3B9B79E8A5 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_50C4242D5E4547628720C38D393C9792 }}
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+          use-cache: 'true'
 
-      - name: "Deploy to Azure Web App"
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "blacklist-butler"
-          slot-name: "Production"
-          package: ${{ github.workspace }}/release.zip
-          startup-command: "npm run env -- bun --bun run src/index.ts"
+      - name: Check Tailscale connection
+        run: |
+          tailscale status || (echo "Tailscale connection failed" && exit 1)
+
+      - name: "Deploy container"
+        run: |
+          docker context create docker-host --docker "host=${{ secrets.DOCKER_HOST }}"
+          docker --context docker-host compose up --build -d

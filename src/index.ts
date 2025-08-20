@@ -3,7 +3,7 @@ import "reflect-metadata";
 import { Interaction, Message, IntentsBitField } from "discord.js";
 import { Client } from "discordx";
 import { importx } from "@discordx/importer";
-import { applicationDefault, initializeApp } from "firebase-admin/app";
+import { applicationDefault, cert, initializeApp } from "firebase-admin/app";
 
 // set client token
 const token = process.env.DISCORD_TOKEN ?? '';
@@ -52,30 +52,44 @@ client.on('messageCreate', async (message: Message) => {
 	client.executeCommand(message);
 });
 
+function initFirebaseIfNeeded() {
+	if (process.env.STORE_TYPE !== 'firebase') return;
+
+	const bucket = process.env.FIREBASE_STORAGE_BUCKET;
+	if (!bucket) {
+		console.error('STORE_TYPE=firebase but FIREBASE_STORAGE_BUCKET missing');
+		process.exit(1);
+	}
+
+	// Option 1: base64 env var (preferred for local dev to avoid mounting files)
+	const b64 = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+	if (b64) {
+		try {
+			const json = JSON.parse(atob(b64));
+			initializeApp({ credential: cert(json), storageBucket: bucket });
+			console.log('Firebase initialized via FIREBASE_SERVICE_ACCOUNT_BASE64');
+			return;
+		} catch (e) {
+			console.error('Failed to parse FIREBASE_SERVICE_ACCOUNT_BASE64:', e);
+			process.exit(1);
+		}
+	}
+
+	// Option 2: GOOGLE_APPLICATION_CREDENTIALS path (mounted file)
+	if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+		initializeApp({ credential: applicationDefault(), storageBucket: bucket });
+		console.log('Firebase initialized via GOOGLE_APPLICATION_CREDENTIALS');
+		return;
+	}
+
+	console.error('STORE_TYPE=firebase but no credentials provided (set FIREBASE_SERVICE_ACCOUNT_BASE64 or mount GOOGLE_APPLICATION_CREDENTIALS)');
+	process.exit(1);
+}
+
 async function run() {
+	initFirebaseIfNeeded();
 	await importx(import.meta.dirname + "/{events,commands}/**/*.{ts,js}");
 	await client.login(token); // provide your bot token
-
-	if (process.env.STORE_TYPE == 'firebase') {  // && process.env.GOOGLE_APPLICATION_CREDENTIALS
-		if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-			console.error('Store_Type is firebase, but GOOGLE_APPLICATION_CREDENTIALS is not set');
-			console.error('Please provide GOOGLE_APPLICATION_CREDENTIALS');
-			return;
-		}
-		if (!process.env.FIREBASE_STORAGE_BUCKET) {
-			console.error('Store_Type is firebase, but FIREBASE_STORAGE_BUCKET is not set');
-			console.error('Please provide FIREBASE_STORAGE_BUCKET');
-			return;
-		}
-
-		console.log('Store_Type is firebase');
-		console.log('Using GOOGLE_APPLICATION_CREDENTIALS and FIREBASE_STORAGE_BUCKET');
-
-		initializeApp({
-			credential: applicationDefault(),
-			storageBucket: process.env.FIREBASE_STORAGE_BUCKET
-		});
-	}
 }
 
 await run();
