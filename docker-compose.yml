@@ -1,0 +1,25 @@
+services:
+  blacklist-butler:
+    build: .
+    container_name: blacklist-butler
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+      - STORE_TYPE=firebase # or 'local'
+      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
+      # Option A: provide base64 service account (uncomment and set value)
+      - FIREBASE_SERVICE_ACCOUNT_BASE64=${FIREBASE_SERVICE_ACCOUNT_BASE64}
+      # Option B: mount credentials file & point GOOGLE_APPLICATION_CREDENTIALS to it
+      # - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase_sa.json
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+    # volumes:
+    #   - ./guilds:/app/guilds
+    # secrets:
+    #   - firebase_sa.json
+
+# secrets:
+#   firebase_sa.json:
+#     file: ./blacklist-butler-firebase-adminsdk-56w1m-a86c298a46.json
