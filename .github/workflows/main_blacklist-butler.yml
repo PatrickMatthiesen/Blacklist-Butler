@@ -17,44 +17,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read #This is required for actions/checkout
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-
-      - name: bun install
-        run: bun install --production
-
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: blacklist-butler
-          path: release.zip
-
   deploy:
     runs-on: ubuntu-latest
-    needs: build
     environment:
       name: "Production"
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
       contents: read #This is required for actions/checkout
 
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: blacklist-butler
+      - uses: actions/checkout@v5
+        name: Checkout code
 
       - name: Connect to Tailscale
         uses: tailscale/github-action@v3
@@ -64,11 +36,19 @@ jobs:
           tags: tag:ci
           use-cache: 'true'
 
-      - name: Check Tailscale connection
+      - name: Add SSH key to known_hosts
         run: |
-          tailscale status || (echo "Tailscale connection failed" && exit 1)
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: "Deploy container"
         run: |
-          docker context create docker-host --docker "host=${{ secrets.DOCKER_HOST }}"
+          docker context create docker-host --docker "host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
           docker --context docker-host compose up --build -d
+          docker context rm docker-host || true
+        env:
+          PORT: 3000
+          STORE_TYPE: firebase
+          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          FIREBASE_SERVICE_ACCOUNT_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
