@@ -35,6 +35,8 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
           use-cache: "true"
+          version: latest
+          ping: ${{ secrets.SSH_HOST }}
 
       - name: Add SSH key to known_hosts
         run: |
