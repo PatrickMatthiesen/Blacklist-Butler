@@ -20,28 +20,59 @@ export class FirebaseBlacklistStore implements BlacklistStore {
     }
 
     private async loadFromFirebase(path: string): Promise<string> {
+        console.log(`[firebase-store] reading ${path}`);
+
         const file = this.store.bucket().file(path);
         const fileUrl = await file.getSignedUrl({
             action: "read",
             expires: Date.now() + 1000 * 60 // 1 minute
           });
-          const fileContent = await (await Bun.fetch(fileUrl[0])).text();
+
+        const response = await Bun.fetch(fileUrl[0]);
+        const fileContent = await response.text();
+
+        console.log(
+            `[firebase-store] ${path} -> ${response.status} ${response.statusText}; content-type=${response.headers.get('content-type') ?? 'unknown'}`
+        );
+
+        if (!response.ok) {
+            console.warn(`[firebase-store] ${path} body preview: ${fileContent.slice(0, 250)}`);
+        }
+
         return fileContent;
     }
 
     async loadBlacklist(): Promise<Map<string, string[]>> {
         const data = await this.loadFromFirebase(`${this.folderPath}/Blacklist.json`);
-        return new Map<string, string[]>(JSON.parse(data));
+
+        try {
+            return new Map<string, string[]>(JSON.parse(data));
+        } catch (error) {
+            console.error(`[firebase-store] failed to parse blacklist JSON for ${this.folderPath}/Blacklist.json`, data.slice(0, 250));
+            throw error;
+        }
     }
 
     async loadMessages(): Promise<Map<string, Message>> {
         const data = await this.loadFromFirebase(`${this.folderPath}/messages.json`);
-        return new Map<string, Message>(JSON.parse(data));
+
+        try {
+            return new Map<string, Message>(JSON.parse(data));
+        } catch (error) {
+            console.error(`[firebase-store] failed to parse messages JSON for ${this.folderPath}/messages.json`, data.slice(0, 250));
+            throw error;
+        }
     }
 
     async loadConfig(): Promise<Map<string, string>> {
         const data = await this.loadFromFirebase(`${this.folderPath}/config.json`);
-        return new Map<string, string>(JSON.parse(data));
+
+        try {
+            return new Map<string, string>(JSON.parse(data));
+        } catch (error) {
+            console.error(`[firebase-store] failed to parse config JSON for ${this.folderPath}/config.json`, data.slice(0, 250));
+            throw error;
+        }
     }
 
     async loadByName(name: string): Promise<string | null> {
