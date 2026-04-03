@@ -21,7 +21,7 @@ export class LocalBlacklistStore implements BlacklistStore {
         if (!await file.exists()) {
             console.log('blacklist file does not exist');
             console.log('creating blacklist file ' + file.name);
-            
+
             const list = new Map<string, string[]>();
             await Bun.write(file, JSON.stringify([...list], null, 4));
             return list;
@@ -36,10 +36,10 @@ export class LocalBlacklistStore implements BlacklistStore {
         // load the message ids file
         const file = Bun.file(`${this.folderPath}/messages.json`);
 
-        if (!file.exists()) {
+        if (!await file.exists()) {
             const list = new Map<string, Message>();
 
-            Bun.write(file, JSON.stringify([...list], null, 4));
+            await Bun.write(file, JSON.stringify([...list], null, 4));
             return list;
         }
 

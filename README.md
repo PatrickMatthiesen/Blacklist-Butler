@@ -6,7 +6,7 @@ This is a Blacklist manager for in channel blacklists. Maybe your game or simila
 
 Go to a link bellow and pick the server you want to add the bot to.
 
-* [Least permissions](https://discord.com/api/oauth2/authorize?client_id=915952587273023508&permissions=11264&scope=bot%20applications.commands)
+* [Least permissions (Recommended)](https://discord.com/api/oauth2/authorize?client_id=915952587273023508&permissions=11264&scope=bot%20applications.commands)
 * [For possible future features](https://discord.com/api/oauth2/authorize?client_id=915952587273023508&permissions=1236987604054&scope=bot%20applications.commands)
 * [All permissions (Administrator)](https://discord.com/api/oauth2/authorize?client_id=915952587273023508&permissions=8&scope=bot%20applications.commands)
 

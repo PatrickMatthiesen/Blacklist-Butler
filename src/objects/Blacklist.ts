@@ -1,6 +1,18 @@
 import { Message, TextBasedChannel, TextChannel } from "discord.js";
 import { BlacklistStore } from "../interfaces/blacklist-store.js";
 
+export type BlacklistWriteFailureReason = 'cannot-write' | 'rewrite-required';
+
+export class BlacklistWriteError extends Error {
+    reason: BlacklistWriteFailureReason;
+
+    constructor(reason: BlacklistWriteFailureReason, message: string) {
+        super(message);
+        this.name = 'BlacklistWriteError';
+        this.reason = reason;
+    }
+}
+
 export class Blacklist {
     private blacklist: Map<string, string[]>; // the content of the old messages
     private messages: Map<string, Message>; //the old messages for editing the messages
@@ -24,11 +36,18 @@ export class Blacklist {
         this.blacklist = await this.store.loadBlacklist();
         this.messages = await this.store.loadMessages();
         this.config = await this.store.loadConfig();
-        this.prefix = this.config.get('prefix') ?? '***--'; // if something goes wrong we assume the prefix is the default
+        this.prefix = this.config.get('blPrefix') ?? this.config.get('prefix') ?? '***--'; // if something goes wrong we assume the prefix is the default
 
         if (this.isEmpty()) {
             this.initEmpty();
         }
+    }
+
+    resetForImport() {
+        this.blacklist = new Map<string, string[]>();
+        this.messages = new Map<string, Message>();
+        this.toDelete = [];
+        this.initEmpty();
     }
 
     initEmpty() {
@@ -64,7 +83,7 @@ export class Blacklist {
         console.log('adds ' + name);
         console.log(this.blacklist);
         console.log(typeof this.blacklist);
-        
+
         this.add(name);
         this.sort();
 
@@ -73,7 +92,8 @@ export class Blacklist {
         await this.updateMessage(char);
 
 
-        this.saveBlacklist();
+        await this.saveBlacklist();
+        await this.saveMessages();
         return true;
     }
 
@@ -83,7 +103,7 @@ export class Blacklist {
         this.remove(name);
         this.sort();
         console.log('sorted');
-        
+
 
         const char = this.getChar(name);
         console.log('got char');
@@ -91,7 +111,8 @@ export class Blacklist {
         await this.updateMessage(char);
         console.log('updated message');
 
-        this.saveBlacklist();
+        await this.saveBlacklist();
+        await this.saveMessages();
         console.log('saved blacklist');
         return true;
     }
@@ -117,12 +138,22 @@ export class Blacklist {
     async updateMessage(char: string) {
         const msgid = this.messages.get(char)?.id;
         const names = this.blacklist.get(char);
-        if (!msgid || !names) return false;
+        if (!names) return false;
 
-        const msg = await this.channel.messages.fetch(msgid);
+        if (!msgid) {
+            throw new BlacklistWriteError('rewrite-required', 'No stored blacklist message found for this letter');
+        }
 
-        msg.edit(names.join('\n'));
-        console.log('eddited message ' + msgid);
+        try {
+            const msg = await this.channel.messages.fetch(msgid);
+
+            await msg.edit(names.join('\n'));
+            this.messages.set(char, msg);
+            console.log('eddited message ' + msgid);
+            return true;
+        } catch (error) {
+            throw this.mapWriteError(error);
+        }
     }
 
     async writeToChat() {
@@ -136,7 +167,15 @@ export class Blacklist {
     }
 
     async sendAndSave(text: string) {
-        const msg = await this.channel.send(text);
+        let msg: Message;
+        const channel = this.channel as TextChannel;
+
+        try {
+            msg = await channel.send(text);
+        } catch (error) {
+            throw this.mapWriteError(error);
+        }
+
         this.messages.set(text.charAt(this.prefix.length), msg);
     }
 
@@ -168,8 +207,8 @@ export class Blacklist {
         await this.store.saveBlacklist(this.blacklist);
     }
 
-    saveMessages() {
-        this.store.saveMessages(this.messages);
+    async saveMessages() {
+        await this.store.saveMessages(this.messages);
     }
 
     private getChar(message: string) {
@@ -182,7 +221,44 @@ export class Blacklist {
         return this.blacklist.size == 0;
     }
 
+    hasStoredNames() {
+        for (const list of this.blacklist.values()) {
+            if (list.length > 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     getPrefix() {
         return this.prefix;
+    }
+
+    private mapWriteError(error: unknown) {
+        const code = this.getDiscordErrorCode(error);
+
+        if (code === 10008) {
+            return new BlacklistWriteError('rewrite-required', 'Stored blacklist message no longer exists in this channel');
+        }
+
+        if (code === 50001 || code === 50005 || code === 50013) {
+            return new BlacklistWriteError('cannot-write', 'The bot cannot write to the blacklist in this channel');
+        }
+
+        if (error instanceof Error) {
+            return error;
+        }
+
+        return new Error(String(error));
+    }
+
+    private getDiscordErrorCode(error: unknown) {
+        if (typeof error !== 'object' || error === null || !('code' in error)) {
+            return undefined;
+        }
+
+        const code = (error as { code: unknown }).code;
+        return typeof code === 'number' ? code : undefined;
     }
 }

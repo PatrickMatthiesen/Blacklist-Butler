@@ -33,7 +33,7 @@ Bun.serve({
 });
 
 // When the client is ready, run this code (only once)
-client.once('ready', async () => {
+client.once('clientReady', async () => {
 	await client.guilds.fetch();
 
 	// to create/update/delete discord application commands
