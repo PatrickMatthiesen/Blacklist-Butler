@@ -14,7 +14,7 @@ ENV NODE_ENV=production\
 # Copy only production node_modules and source code needed at runtime
 COPY --from=deps /app/node_modules node_modules
 COPY src src
-COPY package.json bun.lock ./
+COPY package.json bun.lock tsconfig.json ./
 
 # (Optional) if you transpile in future, copy dist instead of src.
 # Credentials / data (firebase key, guild data) are mounted at runtime via docker-compose.
