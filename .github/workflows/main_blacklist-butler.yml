@@ -6,9 +6,12 @@ on:
       - main
     paths:
       - ".github/workflows/main_blacklist-butler.yml"
+      - "docker-compose.yml"
+      - "dockerfile"
       - "src/**"
       - "package.json"
       - "bun.lock"
+      - "tsconfig.json"
   workflow_dispatch:
 
 # Add concurrency control to ensure only one deployment runs at a time
