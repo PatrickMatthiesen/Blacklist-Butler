@@ -1,10 +1,10 @@
 import { getStorage } from "firebase-admin/storage";
-import { initializeApp } from "firebase-admin/app";
 import { readdir } from "node:fs/promises";
+import { initializeFirebaseAppFromEnvironment } from "../stores/store-bootstrap.js";
 
 
 // Initialize Firebase
-const app = initializeApp();
+const app = initializeFirebaseAppFromEnvironment();
 
 const storage = getStorage(app);
 

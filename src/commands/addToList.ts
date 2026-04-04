@@ -2,9 +2,8 @@ import { ApplicationCommandOptionType, CommandInteraction, Message, TextBasedCha
 import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
 import { Blacklist, BlacklistWriteError } from '../objects/Blacklist.js';
 import { setGuildBlPrefix } from '../objects/GuildDataHandler.js';
-import { LocalBlacklistStore } from '../objects/local-blacklist-store.js';
-import { FirebaseBlacklistStore } from '../Firebase/firebase-blacklist-store.js';
 import { BlacklistStore } from '../interfaces/blacklist-store.js';
+import { createBlacklistStore } from '../stores/store-factory.js';
 
 
 
@@ -205,10 +204,6 @@ async function addAllMessages(channel: TextBasedChannel, blacklist: Blacklist) {
     await fetchAndHandle(channel, blacklist, true, true);
 }
 
-async function addNewMessages(channel: TextBasedChannel, blacklist: Blacklist) {
-    await fetchAndHandle(channel, blacklist, true);
-}
-
 async function addOldMessages(channel: TextBasedChannel, blacklist: Blacklist) {
     await fetchAndHandle(channel, blacklist, false, true);
 }
@@ -264,10 +259,7 @@ async function addSingles(msg: Message, blacklist: Blacklist) {
 }
 
 async function getStore(guildId: string): Promise<BlacklistStore> {
-    if (process.env.STORE_TYPE == 'firebase' || process.env.GOOGLE_APPLICATION_CREDENTIALS)
-        return new FirebaseBlacklistStore(guildId);
-
-    return new LocalBlacklistStore(guildId);
+    return createBlacklistStore(guildId);
 }
 
 function getBlacklistWriteErrorMessage(error: unknown) {

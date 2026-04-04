@@ -53,7 +53,7 @@ jobs:
           docker context rm docker-host || true
         env:
           PORT: 3000
-          STORE_TYPE: firebase
-          FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
-          FIREBASE_SERVICE_ACCOUNT_BASE64: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_BASE64 }}
+          STORE_TYPE: supabase
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}

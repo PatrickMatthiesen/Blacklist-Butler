@@ -8,12 +8,14 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
-      - STORE_TYPE=firebase # or 'local'
+      - STORE_TYPE=${STORE_TYPE} # local, firebase, or supabase
       - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
       # Option A: provide base64 service account (uncomment and set value)
       - FIREBASE_SERVICE_ACCOUNT_BASE64=${FIREBASE_SERVICE_ACCOUNT_BASE64}
       # Option B: mount credentials file & point GOOGLE_APPLICATION_CREDENTIALS to it
       # - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase_sa.json
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
       - DISCORD_TOKEN=${DISCORD_TOKEN}
     # volumes:
     #   - ./guilds:/app/guilds

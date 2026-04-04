@@ -1,6 +1,7 @@
 import { BlacklistStore } from '../interfaces/blacklist-store.js';
 import { getStorage, Storage } from "firebase-admin/storage";
 import { Message } from 'discord.js';
+import { readFirebaseText } from './firebase-read.js';
 
 export class FirebaseBlacklistStore implements BlacklistStore {
     private folderPath: string;
@@ -21,25 +22,7 @@ export class FirebaseBlacklistStore implements BlacklistStore {
 
     private async loadFromFirebase(path: string): Promise<string> {
         console.log(`[firebase-store] reading ${path}`);
-
-        const file = this.store.bucket().file(path);
-        const fileUrl = await file.getSignedUrl({
-            action: "read",
-            expires: Date.now() + 1000 * 60 // 1 minute
-          });
-
-        const response = await Bun.fetch(fileUrl[0]);
-        const fileContent = await response.text();
-
-        console.log(
-            `[firebase-store] ${path} -> ${response.status} ${response.statusText}; content-type=${response.headers.get('content-type') ?? 'unknown'}`
-        );
-
-        if (!response.ok) {
-            console.warn(`[firebase-store] ${path} body preview: ${fileContent.slice(0, 250)}`);
-        }
-
-        return fileContent;
+        return readFirebaseText(path);
     }
 
     async loadBlacklist(): Promise<Map<string, string[]>> {
@@ -111,9 +94,9 @@ export class FirebaseBlacklistStore implements BlacklistStore {
 
     async saveByName(name: string, data: string | Buffer) {
         const file = this.store.bucket().file(`${this.folderPath}/${name}.json`);
-        await file.save(data, { 
-            gzip: true, 
-            contentType: 'application/json' 
+        await file.save(data, {
+            gzip: true,
+            contentType: 'application/json'
         });
     }
 }
