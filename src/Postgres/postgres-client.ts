@@ -22,6 +22,39 @@ function getPostgresConnectionConfig(env: NodeJS.ProcessEnv = process.env): Post
     return { url: databaseUrl };
 }
 
+export function getPostgresDatabaseName(env: NodeJS.ProcessEnv = process.env) {
+    const connectionConfig = getPostgresConnectionConfig(env);
+
+    if ('database' in connectionConfig && typeof connectionConfig.database === 'string' && connectionConfig.database) {
+        return connectionConfig.database;
+    }
+
+    if ('url' in connectionConfig && typeof connectionConfig.url === 'string') {
+        const databaseName = new URL(connectionConfig.url).pathname.slice(1);
+
+        if (databaseName) {
+            return databaseName;
+        }
+    }
+
+    throw new Error(`${aspireConnectionStringName} must include a database name`);
+}
+
+export function getPostgresAdminConnectionConfig(env: NodeJS.ProcessEnv = process.env): PostgresConnectionConfig {
+    const connectionConfig = getPostgresConnectionConfig(env);
+
+    if ('url' in connectionConfig && typeof connectionConfig.url === 'string') {
+        const adminUrl = new URL(connectionConfig.url);
+        adminUrl.pathname = '/postgres';
+        return { url: adminUrl.toString() };
+    }
+
+    return {
+        ...connectionConfig,
+        database: 'postgres',
+    };
+}
+
 export function validatePostgresConfiguration(env: NodeJS.ProcessEnv = process.env) {
     getPostgresConnectionConfig(env);
 }

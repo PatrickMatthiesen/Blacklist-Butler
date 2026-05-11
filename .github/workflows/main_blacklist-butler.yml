@@ -57,3 +57,4 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+        working-directory: ./docker

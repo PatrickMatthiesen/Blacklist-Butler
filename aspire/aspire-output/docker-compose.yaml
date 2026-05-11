@@ -1,0 +1,81 @@
+services:
+  docker-compose-dashboard:
+    image: "mcr.microsoft.com/dotnet/nightly/aspire-dashboard:latest"
+    ports:
+      - "18888"
+    expose:
+      - "18889"
+      - "18890"
+    networks:
+      - "aspire"
+    restart: "always"
+  postgres:
+    image: "docker.io/library/postgres:17.6"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "scram-sha-256"
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    expose:
+      - "5432"
+    volumes:
+      - type: "volume"
+        target: "/var/lib/postgresql/data"
+        source: "aspire-managed-f50e4d8013-postgres-data"
+        read_only: false
+    networks:
+      - "aspire"
+  apply-migrations:
+    image: "${APPLY_MIGRATIONS_IMAGE}"
+    command:
+      - "src/Postgres/apply-migrations.ts"
+    entrypoint:
+      - "bun"
+    environment:
+      NODE_ENV: "production"
+      ConnectionStrings__blacklist-butler: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=blacklist-butler"
+      BLACKLIST_BUTLER_HOST: "postgres"
+      BLACKLIST_BUTLER_PORT: "5432"
+      BLACKLIST_BUTLER_USERNAME: "postgres"
+      BLACKLIST_BUTLER_PASSWORD: "${POSTGRES_PASSWORD}"
+      BLACKLIST_BUTLER_URI: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/blacklist-butler"
+      BLACKLIST_BUTLER_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres:5432/blacklist-butler"
+      BLACKLIST_BUTLER_DATABASENAME: "blacklist-butler"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://docker-compose-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "apply-migrations"
+    depends_on:
+      postgres:
+        condition: "service_started"
+    networks:
+      - "aspire"
+  bot:
+    image: "${BOT_IMAGE}"
+    environment:
+      NODE_ENV: "production"
+      DISCORD_TOKEN: "${DISCORD_TOKEN}"
+      STORE_TYPE: "postgres"
+      ConnectionStrings__blacklist-butler: "Host=postgres;Port=5432;Username=postgres;Password=${POSTGRES_PASSWORD};Database=blacklist-butler"
+      BLACKLIST_BUTLER_HOST: "postgres"
+      BLACKLIST_BUTLER_PORT: "5432"
+      BLACKLIST_BUTLER_USERNAME: "postgres"
+      BLACKLIST_BUTLER_PASSWORD: "${POSTGRES_PASSWORD}"
+      BLACKLIST_BUTLER_URI: "postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/blacklist-butler"
+      BLACKLIST_BUTLER_JDBCCONNECTIONSTRING: "jdbc:postgresql://postgres:5432/blacklist-butler"
+      BLACKLIST_BUTLER_DATABASENAME: "blacklist-butler"
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://docker-compose-dashboard:18889"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+      OTEL_SERVICE_NAME: "bot"
+    depends_on:
+      postgres:
+        condition: "service_started"
+      apply-migrations:
+        condition: "service_completed_successfully"
+    networks:
+      - "aspire"
+networks:
+  aspire:
+    driver: "bridge"
+volumes:
+  aspire-managed-f50e4d8013-postgres-data:
+    driver: "local"

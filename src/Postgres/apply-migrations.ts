@@ -1,8 +1,39 @@
 import { join } from 'node:path';
-import { getPostgresClient, validatePostgresConfiguration } from './postgres-client.js';
+import { SQL } from 'bun';
+import {
+    getPostgresAdminConnectionConfig,
+    getPostgresClient,
+    getPostgresDatabaseName,
+    validatePostgresConfiguration,
+} from './postgres-client.js';
+
+async function ensureDatabaseExists() {
+    const databaseName = getPostgresDatabaseName();
+    const adminSql = new SQL({
+        ...getPostgresAdminConnectionConfig(),
+        idleTimeout: 5,
+        max: 1,
+    });
+
+    try {
+        const existingDatabase = await adminSql`select 1 from pg_database where datname = ${databaseName}`;
+
+        if (existingDatabase.length === 0) {
+            console.log(`Creating PostgreSQL database ${databaseName}`);
+            await adminSql.unsafe(`CREATE DATABASE ${quotePostgresIdentifier(databaseName)}`);
+        }
+    } finally {
+        await adminSql.close();
+    }
+}
+
+function quotePostgresIdentifier(value: string) {
+    return `"${value.replaceAll('"', '""')}"`;
+}
 
 async function run() {
     validatePostgresConfiguration();
+    await ensureDatabaseExists();
 
     const sql = getPostgresClient();
     const schemaPath = join(process.cwd(), 'src', 'Postgres', 'schema.sql');

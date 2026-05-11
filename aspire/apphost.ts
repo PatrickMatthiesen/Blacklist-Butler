@@ -14,14 +14,19 @@ const postgres = await builder.addPostgres('postgres')
     .withPgAdmin()
     .addDatabase('blacklist-butler');
 
-const applyMigrations = builder.addJavaScriptApp('apply-migrations', '..')
-    .withBun()
-    .withRunScript('migrate:postgres-schema')
+const applyMigrations = builder.addJavaScriptApp('apply-migrations', '..', {
+    runScriptName: 'migrate:postgres-schema'
+}).withBun()
+    .publishAsDockerFile(async (container) => {
+        await container.withEntrypoint('bun');
+        await container.withArgs(['src/Postgres/apply-migrations.ts']);
+    })
     .waitFor(postgres)
     .withReference(postgres);
 
 const bot = builder.addJavaScriptApp("bot", "..")
     .withBun()
+    .publishAsDockerFile(async () => { })
     .withEnvironment('DISCORD_TOKEN', discordToken)
     .withEnvironment('STORE_TYPE', 'postgres')
     .waitFor(postgres)

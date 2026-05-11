@@ -38,6 +38,10 @@ export class Blacklist {
         this.config = await this.store.loadConfig();
         this.prefix = this.config.get('blPrefix') ?? this.config.get('prefix') ?? '***--'; // if something goes wrong we assume the prefix is the default
 
+        if (!this.messages || !this.blacklist) {
+            console.warn('No stored blacklist or messages found, initializing empty blacklist');
+        }
+
         if (this.isEmpty()) {
             this.initEmpty();
         }
