@@ -10,7 +10,10 @@
 build
 aspire/dist
 aspire/.aspire
-aspire/.modules
+aspire/.modules/*
+!aspire/.modules/
+!aspire/.modules/aspire.js
+!aspire/.modules/aspire.d.ts
 
 # User-specific files
 *.rsuser

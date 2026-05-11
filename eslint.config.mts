@@ -6,7 +6,7 @@ export default tseslint.config(
   tseslint.configs.recommended,
   {
     files: ["**/*.ts", "**/*.tsx"],
-    ignores: ["**/dist", "**/build"],
+    ignores: ["**/dist", "**/build", "**/.modules/**"],
     linterOptions: {
       noInlineConfig: true,
       reportUnusedDisableDirectives: "error",

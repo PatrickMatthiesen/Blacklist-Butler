@@ -1,5 +1,5 @@
 import { Message } from 'discord.js';
-import { Sql } from 'postgres';
+import { TransactionSql } from 'postgres';
 import { BlacklistStore } from '../interfaces/blacklist-store.js';
 import { getPostgresClient } from './postgres-client.js';
 
@@ -264,7 +264,7 @@ export class PostgresBlacklistStore implements BlacklistStore {
         });
     }
 
-    private async ensureGuildRow(transaction: Sql) {
+    private async ensureGuildRow(transaction: TransactionSql) {
         await transaction`
             insert into blacklist_guilds (guild_id, updated_at)
             values (${this.guildId}, now())
@@ -273,7 +273,7 @@ export class PostgresBlacklistStore implements BlacklistStore {
         `;
     }
 
-    private async touchGuild(transaction: Sql) {
+    private async touchGuild(transaction: TransactionSql) {
         await transaction`
             update blacklist_guilds
             set updated_at = now()
@@ -281,7 +281,7 @@ export class PostgresBlacklistStore implements BlacklistStore {
         `;
     }
 
-    private async runInTransaction(operation: string, callback: (transaction: Sql) => Promise<void>) {
+    private async runInTransaction(operation: string, callback: (transaction: TransactionSql) => Promise<void>) {
         const sql = getPostgresClient();
 
         try {
