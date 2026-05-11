@@ -1,5 +1,5 @@
 import { Message } from 'discord.js';
-import { TransactionSql } from 'postgres';
+import { type TransactionSQL } from 'bun';
 import { BlacklistStore } from '../interfaces/blacklist-store.js';
 import { getPostgresClient } from './postgres-client.js';
 
@@ -16,6 +16,7 @@ type EntryRow = {
 
 type MessageRow = {
     category: string;
+    message_id: string;
     payload: unknown;
 };
 
@@ -85,14 +86,14 @@ export class PostgresBlacklistStore implements BlacklistStore {
 
         try {
             const rows = await sql<MessageRow[]>`
-                select category, payload
+                select category, message_id, payload
                 from blacklist_message_refs
                 where guild_id = ${this.guildId}
                 order by category asc
             `;
 
             return new Map(
-                rows.map(row => [row.category, row.payload as Message<boolean>])
+                rows.map(row => [row.category, this.toMessagePayload(row)])
             );
         } catch (error) {
             return this.throwOnError('load message refs', error);
@@ -215,7 +216,7 @@ export class PostgresBlacklistStore implements BlacklistStore {
                         ${this.guildId},
                         ${category},
                         ${payload.id},
-                        cast(${JSON.stringify(payload)} as jsonb)
+                        cast(cast(${JSON.stringify(payload)} as text) as jsonb)
                     )
                 `;
             }
@@ -264,7 +265,7 @@ export class PostgresBlacklistStore implements BlacklistStore {
         });
     }
 
-    private async ensureGuildRow(transaction: TransactionSql) {
+    private async ensureGuildRow(transaction: TransactionSQL) {
         await transaction`
             insert into blacklist_guilds (guild_id, updated_at)
             values (${this.guildId}, now())
@@ -273,7 +274,7 @@ export class PostgresBlacklistStore implements BlacklistStore {
         `;
     }
 
-    private async touchGuild(transaction: TransactionSql) {
+    private async touchGuild(transaction: TransactionSQL) {
         await transaction`
             update blacklist_guilds
             set updated_at = now()
@@ -281,7 +282,7 @@ export class PostgresBlacklistStore implements BlacklistStore {
         `;
     }
 
-    private async runInTransaction(operation: string, callback: (transaction: TransactionSql) => Promise<void>) {
+    private async runInTransaction(operation: string, callback: (transaction: TransactionSQL) => Promise<void>) {
         const sql = getPostgresClient();
 
         try {
@@ -299,7 +300,7 @@ export class PostgresBlacklistStore implements BlacklistStore {
 
     private formatPostgresError(error: unknown) {
         if (typeof error === 'object' && error !== null && 'code' in error && error.code === '42P01') {
-            return 'PostgreSQL schema is missing required tables. Run postgres/schema.sql against the database referenced by DATABASE_URL and retry.';
+            return 'PostgreSQL schema is missing required tables. Run src/Postgres/schema.sql against the configured Postgres connection and retry.';
         }
 
         if (error instanceof Error) {
@@ -307,5 +308,15 @@ export class PostgresBlacklistStore implements BlacklistStore {
         }
 
         return String(error);
+    }
+
+    private toMessagePayload(row: MessageRow) {
+        const payload = typeof row.payload === 'string' ? JSON.parse(row.payload) as Record<string, unknown> : row.payload as Record<string, unknown>;
+
+        if (!payload.id) {
+            payload.id = row.message_id;
+        }
+
+        return payload as unknown as Message<boolean>;
     }
 }

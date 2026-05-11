@@ -3,6 +3,8 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+blacklist-butler-*.json
+
 #vs code folder
 .vscode
 
@@ -362,3 +364,6 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+.modules/
+dist/
+.aspire/

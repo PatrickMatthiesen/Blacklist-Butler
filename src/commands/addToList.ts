@@ -16,13 +16,13 @@ abstract class BlacklistButler {
         @SlashOption({ name: 'name', description: 'name of person', required: true, type: ApplicationCommandOptionType.String })
         name: string,
         interaction: CommandInteraction): Promise<void> {
+        if (!await deferInteraction(interaction)) return;
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
         if (!name) {
-            await interaction.reply({ content: 'please add a name', flags: MessageFlags.Ephemeral });
+            await respond(interaction, 'please add a name');
             return;
         }
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
@@ -30,20 +30,20 @@ abstract class BlacklistButler {
 
         if (blacklist.isEmpty()) {
             console.log('blacklist is empty');
-            await interaction.editReply({ content: 'something went wrong getting the blacklist' });
+            await respond(interaction, 'something went wrong getting the blacklist');
             return;
         }
 
         try {
             if (!await blacklist.addOne(name)) {
-                await interaction.editReply({ content: 'something went wrong adding the name' });
+                await respond(interaction, 'something went wrong adding the name');
                 return;
             }
 
             await blacklist.cleanChat();
-            await interaction.editReply({ content: `added ${name}` });
+            await respond(interaction, `added ${name}`);
         } catch (error) {
-            await interaction.editReply({ content: getBlacklistWriteErrorMessage(error) });
+            await respond(interaction, getBlacklistWriteErrorMessage(error));
         }
     }
 
@@ -52,9 +52,8 @@ abstract class BlacklistButler {
         @SlashOption({ name: 'name', description: 'name to remove', required: true, type: ApplicationCommandOptionType.String })
         name: string,
         interaction: CommandInteraction): Promise<void> {
+        if (!await deferInteraction(interaction)) return;
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
-
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
@@ -62,9 +61,9 @@ abstract class BlacklistButler {
 
         try {
             await blacklist.removeOne(name);
-            await interaction.editReply({ content: 'name has been removed' });
+            await respond(interaction, 'name has been removed');
         } catch (error) {
-            await interaction.editReply({ content: getBlacklistWriteErrorMessage(error) });
+            await respond(interaction, getBlacklistWriteErrorMessage(error));
         }
     }
 
@@ -77,9 +76,8 @@ abstract class BlacklistButler {
         @SlashOption({ name: 'rewrite-list', description: 'require from-old-list; rewrite the blacklist messages in this channel', required: false, type: ApplicationCommandOptionType.Boolean })
         rewriteList = false,
         interaction: CommandInteraction): Promise<void> {
+        if (!await deferInteraction(interaction)) return;
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
-
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
@@ -102,7 +100,7 @@ abstract class BlacklistButler {
                 if (hasImportedNames) {
                     await importedBlacklist.saveBlacklist();
                 } else if (!hasSavedNames) {
-                    await interaction.editReply({ content: 'I could not find an old blacklist in this channel, and there is no saved blacklist to reuse.' });
+                    await respond(interaction, 'I could not find an old blacklist in this channel, and there is no saved blacklist to reuse.');
                     return;
                 }
 
@@ -113,23 +111,23 @@ abstract class BlacklistButler {
                 }
 
                 if (hasImportedNames) {
-                    await interaction.editReply({ content: 'stored your list' + (hasOldAdds ? ' and added extras' : '') + (rewriteList ? ', and rewrote the blacklist messages in this channel' : ' to the database') });
+                    await respond(interaction, 'stored your list' + (hasOldAdds ? ' and added extras' : '') + (rewriteList ? ', and rewrote the blacklist messages in this channel' : ' to the database'));
                 } else {
-                    await interaction.editReply({ content: 'No old blacklist messages were found in this channel, so I reused the saved blacklist' + (rewriteList ? ' and rewrote the blacklist messages here' : '') + '.' });
+                    await respond(interaction, 'No old blacklist messages were found in this channel, so I reused the saved blacklist' + (rewriteList ? ' and rewrote the blacklist messages here' : '') + '.');
                 }
                 return;
             }
 
             if (blacklist.hasStoredNames()) {
-                await interaction.editReply({ content: 'A saved blacklist already exists for this guild, so I reused it and did not overwrite anything.' });
+                await respond(interaction, 'A saved blacklist already exists for this guild, so I reused it and did not overwrite anything.');
                 return;
             }
 
             blacklist.resetForImport();
             await blacklist.saveBlacklist();
-            await interaction.editReply({ content: 'I inited the list for you, now just print it :)' });
+            await respond(interaction, 'I inited the list for you, now just print it :)');
         } catch (error) {
-            await interaction.editReply({ content: getBlacklistWriteErrorMessage(error) });
+            await respond(interaction, getBlacklistWriteErrorMessage(error));
         }
 
 
@@ -141,9 +139,8 @@ abstract class BlacklistButler {
         @SlashOption({ name: 'clean', description: 'delete all other messages before printing the list', required: false, type: ApplicationCommandOptionType.String })
         clean = false,
         interaction: CommandInteraction): Promise<void> {
+        if (!await deferInteraction(interaction)) return;
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
-
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
@@ -152,7 +149,7 @@ abstract class BlacklistButler {
             console.log("read from store");
         } catch (error) {
             console.log('fuck this', error);
-            await interaction.editReply({ content: 'something went wrong getting the blacklist' });
+            await respond(interaction, 'something went wrong getting the blacklist');
             return;
         }
 
@@ -164,9 +161,9 @@ abstract class BlacklistButler {
 
             await blacklist.writeToChat();
             await blacklist.saveMessages();
-            await interaction.editReply({ content: 'printet list' });
+            await respond(interaction, 'printet list');
         } catch (error) {
-            await interaction.editReply({ content: getBlacklistWriteErrorMessage(error) });
+            await respond(interaction, getBlacklistWriteErrorMessage(error));
         }
     }
 
@@ -178,15 +175,14 @@ abstract class BlacklistButler {
         @SlashOption({ name: 'prefix', description: 'a prefix like "--" for a header "--A--" or "***" for a bold and italics header', type: ApplicationCommandOptionType.String })
         prefix: string,
         interaction: CommandInteraction): Promise<void> {
+        if (!await deferInteraction(interaction)) return;
         if (!interaction.guildId) return;
-
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
         const store = await getStore(interaction.guildId!);
 
         if (await setGuildBlPrefix(interaction.guildId, prefix, store))
-            await interaction.editReply({ content: 'The headers will now look like ' + prefix + 'A' + prefix.split('').reverse().join('') });
-        else await interaction.editReply({ content: 'something went wrong setting the prefix' });
+            await respond(interaction, 'The headers will now look like ' + prefix + 'A' + prefix.split('').reverse().join(''));
+        else await respond(interaction, 'something went wrong setting the prefix');
     }
 }
 
@@ -196,8 +192,34 @@ async function isBlacklistChannel(interaction: CommandInteraction) {
     }
 
     console.log('channel was not a blacklist');
-    await interaction.reply({ content: 'channel is not a blacklist', flags: MessageFlags.Ephemeral });
+    await respond(interaction, 'channel is not a blacklist');
     return false;
+}
+
+async function deferInteraction(interaction: CommandInteraction) {
+    try {
+        if (!interaction.deferred && !interaction.replied) {
+            await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+        }
+
+        return true;
+    } catch (error) {
+        console.error('failed to acknowledge interaction', formatDiscordError(error));
+        return false;
+    }
+}
+
+async function respond(interaction: CommandInteraction, content: string) {
+    try {
+        if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ content });
+            return;
+        }
+
+        await interaction.reply({ content, flags: MessageFlags.Ephemeral });
+    } catch (error) {
+        console.error('failed to respond to interaction', formatDiscordError(error));
+    }
 }
 
 async function addAllMessages(channel: TextBasedChannel, blacklist: Blacklist) {
@@ -267,10 +289,26 @@ function getBlacklistWriteErrorMessage(error: unknown) {
         if (error.reason == 'cannot-write') {
             return 'I cannot write to the blacklist in this channel. Check that the bot can view this channel, send messages, manage messages when needed, and edit its own messages.';
         }
-
+        
+        console.error('unexpected blacklist write error', error);
         return 'I could not update the saved blacklist messages for this channel. If you want to rebuild the list here, run /blacklist init with from-old-list enabled and rewrite-list enabled.';
     }
 
     console.error('unexpected blacklist error', error);
     return 'something went wrong updating the blacklist';
+}
+
+function formatDiscordError(error: unknown) {
+    if (typeof error === 'object' && error !== null) {
+        const code = 'code' in error ? ` code=${String(error.code)}` : '';
+        const status = 'status' in error ? ` status=${String(error.status)}` : '';
+
+        if (error instanceof Error) {
+            return `${error.message}${code}${status}`;
+        }
+
+        return `${String(error)}${code}${status}`;
+    }
+
+    return String(error);
 }

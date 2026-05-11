@@ -20,7 +20,7 @@ Go to a link bellow and pick the server you want to add the bot to.
 6. Pick a backend with 'STORE_TYPE=local', 'STORE_TYPE=firebase', 'STORE_TYPE=supabase', or 'STORE_TYPE=postgres'. If it is omitted, the bot falls back to local storage.
 7. For Firebase, also set 'FIREBASE_STORAGE_BUCKET' and either 'FIREBASE_SERVICE_ACCOUNT_BASE64' or 'GOOGLE_APPLICATION_CREDENTIALS'.
 8. For Supabase, set 'SUPABASE_URL' and 'SUPABASE_SERVICE_ROLE_KEY', then run the SQL in 'supabase/schema.sql' in the Supabase SQL editor.
-9. For PostgreSQL, set 'DATABASE_URL' (for example 'postgres://blacklist_butler:password@localhost:5432/blacklist_butler'), then run the SQL in 'postgres/schema.sql' against that database.
+9. For PostgreSQL, set 'ConnectionStrings__blacklist-butler' (Aspire/Npgsql style, for example 'Host=localhost;Port=5432;Database=blacklist_butler;Username=blacklist_butler;Password=password') or a Postgres URL with 'POSTGRES_URL'/'DATABASE_URL', then run the SQL in 'src/Postgres/schema.sql' against that database.
 10. Now just run 'bun run start' and the bot will be up and running (only this step is needed in the future)
 11. To add the bot to your server, go to your bot on [Discord](https://discord.com/developers/applications) again.
 12. Go to OAuth2 -> URL Generator.
@@ -74,7 +74,21 @@ The migration is idempotent and overwrites the destination rows for a guild so y
 
 ## PostgreSQL schema
 
-Run the SQL in 'postgres/schema.sql' before starting the bot with 'STORE_TYPE=postgres'.
+Run the SQL in 'src/Postgres/schema.sql' before starting the bot with 'STORE_TYPE=postgres'.
+
+To migrate existing Supabase data into PostgreSQL, configure 'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', and a Postgres connection through 'ConnectionStrings__blacklist-butler', 'POSTGRES_URL', or 'DATABASE_URL', run the SQL in 'src/Postgres/schema.sql', then run:
+
+'ConnectionStrings__blacklist-butler' may be the Aspire/Npgsql connection string that Aspire passes when the app uses 'withReference(postgres)'. URL-style variables must be the full PostgreSQL URL, including username and password.
+
+```bash
+bun run migrate:supabase-to-postgres
+```
+
+The migration upserts rows so it can be rerun safely. To clear the destination app tables first and make PostgreSQL mirror Supabase, run:
+
+```bash
+bun run migrate:supabase-to-postgres -- --replace
+```
 
 ## Aspire AppHost
 

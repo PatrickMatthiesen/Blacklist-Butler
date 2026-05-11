@@ -1,36 +1,37 @@
-import { ContainerLifetime, EndpointProperty, createBuilder, refExpr } from './.modules/aspire.js';
+// Aspire TypeScript AppHost
+// For more information, see: https://aspire.dev
 
-async function main() {
-    const builder = await createBuilder();
+import { createBuilder } from './.modules/aspire.js';
 
-    await builder.addDockerComposeEnvironment('compose');
+const builder = await createBuilder();
 
-    const discordToken = await builder.addParameter('discord-token', { secret: true });
-    const postgres = await builder.addPostgres('postgres');
-    await postgres.withLifetime(ContainerLifetime.Persistent);
-    await postgres.withInitFiles('../postgres');
+await builder.addDockerComposeEnvironment('docker-compose');
 
-    const databaseName = 'blacklist_butler';
-    const database = await postgres.addDatabase(databaseName);
-    const postgresEndpoint = await postgres.getEndpoint('tcp');
-    const postgresHost = await postgresEndpoint.property(EndpointProperty.Host);
-    const postgresPort = await postgresEndpoint.property(EndpointProperty.Port);
+const discordToken = await builder.addParameter('discord-token', { secret: true });
 
-    await builder
-        .addDockerfile('blacklist-butler', '..')
-        .withEnvironment('DISCORD_TOKEN', discordToken)
-        .withEnvironment('STORE_TYPE', 'postgres')
-        .withEnvironment(
-            'DATABASE_URL',
-            refExpr`postgres://${postgres.userNameParameter}:${postgres.passwordParameter}@${postgresHost}:${postgresPort}/${databaseName}`
-        )
-        .withEnvironment('NODE_ENV', 'production')
-        .withHttpEndpoint({ env: 'PORT', targetPort: 3000, port: 3000 })
-        .withExternalHttpEndpoints()
-        .withReference(database)
-        .waitFor(database);
+const postgres = await builder.addPostgres('postgres')
+    .withDataVolume()
+    .withPgAdmin()
+    .addDatabase('blacklist-butler');
 
-    await builder.build().run();
+const applyMigrations = builder.addJavaScriptApp('apply-migrations', '..')
+    .withBun()
+    .withRunScript('migrate:postgres-schema')
+    .waitFor(postgres)
+    .withReference(postgres);
+
+const bot = builder.addJavaScriptApp("bot", "..")
+    .withBun()
+    .withEnvironment('DISCORD_TOKEN', discordToken)
+    .withEnvironment('STORE_TYPE', 'postgres')
+    .waitFor(postgres)
+    .waitForCompletion(applyMigrations)
+    .withReference(postgres);
+
+if (await builder.environment().isDevelopment()) {
+    await bot.withRunScript('dev');
+} else {
+    await bot.withRunScript('src/index.ts');
 }
 
-await main();
+await builder.build().run();

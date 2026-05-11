@@ -34,6 +34,11 @@ create table if not exists blacklist_message_refs (
     constraint blacklist_message_refs_category_length check (char_length(category) = 1)
 );
 
+update blacklist_message_refs
+set payload = (payload #>> '{}')::jsonb
+where jsonb_typeof(payload) = 'string'
+  and left(payload #>> '{}', 1) = '{';
+
 create table if not exists blacklist_config_entries (
     guild_id text not null references blacklist_guilds (guild_id) on delete cascade,
     config_key text not null,
