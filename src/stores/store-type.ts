@@ -1,4 +1,4 @@
-export const supportedStoreTypes = ['local', 'firebase', 'supabase'] as const;
+export const supportedStoreTypes = ['local', 'firebase', 'supabase', 'postgres'] as const;
 
 export type StoreType = (typeof supportedStoreTypes)[number];
 

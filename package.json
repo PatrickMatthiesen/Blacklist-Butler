@@ -28,6 +28,7 @@
     "discord.js": "14.26.2",
     "discordx": "11.13.3",
     "firebase-admin": "13.7.0",
+    "postgres": "3.4.9",
     "reflect-metadata": "0.2.2"
   },
   "devDependencies": {

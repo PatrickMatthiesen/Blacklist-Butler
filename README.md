@@ -17,16 +17,17 @@ Go to a link bellow and pick the server you want to add the bot to.
 3. Now go to [Discord](https://discord.com/developers/applications) and make a new application with whatever name and so on that you want.
 4. Save the token and make sure not to share it with anyone.
 5. Next make a .env file in the project root folder and add 'DISCORD_TOKEN=' followed by your token from you just saved.
-6. Pick a backend with 'STORE_TYPE=local', 'STORE_TYPE=firebase', or 'STORE_TYPE=supabase'. If it is omitted, the bot falls back to local storage.
+6. Pick a backend with 'STORE_TYPE=local', 'STORE_TYPE=firebase', 'STORE_TYPE=supabase', or 'STORE_TYPE=postgres'. If it is omitted, the bot falls back to local storage.
 7. For Firebase, also set 'FIREBASE_STORAGE_BUCKET' and either 'FIREBASE_SERVICE_ACCOUNT_BASE64' or 'GOOGLE_APPLICATION_CREDENTIALS'.
 8. For Supabase, set 'SUPABASE_URL' and 'SUPABASE_SERVICE_ROLE_KEY', then run the SQL in 'supabase/schema.sql' in the Supabase SQL editor.
-9. Now just run 'bun run start' and the bot will be up and running (only this step is needed in the future)
-10. To add the bot to your server, go to your bot on [Discord](https://discord.com/developers/applications) again.
-11. Go to OAuth2 -> URL Generator.
-12. For the scope pick bot and application.commands.
-13. For the permissions pick Read Messages/View Channels, Send Messages, Manage Messages.
-14. Copy and save the link.
-15. Enter the link in a web browser and pick the server you want to add the bot to.
+9. For PostgreSQL, set 'DATABASE_URL' (for example 'postgres://blacklist_butler:password@localhost:5432/blacklist_butler'), then run the SQL in 'postgres/schema.sql' against that database.
+10. Now just run 'bun run start' and the bot will be up and running (only this step is needed in the future)
+11. To add the bot to your server, go to your bot on [Discord](https://discord.com/developers/applications) again.
+12. Go to OAuth2 -> URL Generator.
+13. For the scope pick bot and application.commands.
+14. For the permissions pick Read Messages/View Channels, Send Messages, Manage Messages.
+15. Copy and save the link.
+16. Enter the link in a web browser and pick the server you want to add the bot to.
 
 ## How to make a blacklist channel
 
@@ -70,3 +71,15 @@ bun run migrate:firebase-to-supabase
 ```
 
 The migration is idempotent and overwrites the destination rows for a guild so you can rerun it safely.
+
+## PostgreSQL schema
+
+Run the SQL in 'postgres/schema.sql' before starting the bot with 'STORE_TYPE=postgres'.
+
+## Aspire AppHost
+
+A TypeScript Aspire AppHost is available under 'aspire/' and models the bot container plus PostgreSQL for local runs and Docker Compose publishing.
+
+1. Install the Aspire CLI and Docker prerequisites for your machine.
+2. Open a command prompt in 'aspire/' and run 'npm install'.
+3. Run 'aspire run' and provide the Discord token parameter when prompted.

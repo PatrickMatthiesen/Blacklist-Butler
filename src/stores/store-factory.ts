@@ -1,5 +1,6 @@
 import { FirebaseBlacklistStore } from '../Firebase/firebase-blacklist-store.js';
 import { BlacklistStore } from '../interfaces/blacklist-store.js';
+import { PostgresBlacklistStore } from '../Postgres/postgres-blacklist-store.js';
 import { LocalBlacklistStore } from '../objects/local-blacklist-store.js';
 import { SupabaseBlacklistStore } from '../Supabase/supabase-blacklist-store.js';
 import { resolveStoreType } from './store-type.js';
@@ -13,6 +14,10 @@ export function createBlacklistStore(guildId: string): BlacklistStore {
 
     if (storeType === 'supabase') {
         return new SupabaseBlacklistStore(guildId);
+    }
+
+    if (storeType === 'postgres') {
+        return new PostgresBlacklistStore(guildId);
     }
 
     return new LocalBlacklistStore(guildId);

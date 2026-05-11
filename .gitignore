@@ -8,6 +8,9 @@
 
 #build folder
 build
+aspire/dist
+aspire/.aspire
+aspire/.modules
 
 # User-specific files
 *.rsuser
