@@ -19,7 +19,7 @@ const applyMigrations = builder.addJavaScriptApp('apply-migrations', '..', {
 }).withBun()
     .publishAsDockerFile(async (container) => {
         await container.withEntrypoint('bun');
-        await container.withArgs(['src/Postgres/apply-migrations.ts']);
+        await container.withArgs(['migrate:postgres-schema']);
     })
     .waitFor(postgres)
     .withReference(postgres);

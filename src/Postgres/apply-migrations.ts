@@ -15,6 +15,8 @@ async function ensureDatabaseExists() {
         max: 1,
     });
 
+    console.log(`Ensuring PostgreSQL database "${databaseName}" exists`);
+
     try {
         const existingDatabase = await adminSql`select 1 from pg_database where datname = ${databaseName}`;
 
@@ -22,6 +24,9 @@ async function ensureDatabaseExists() {
             console.log(`Creating PostgreSQL database ${databaseName}`);
             await adminSql.unsafe(`CREATE DATABASE ${quotePostgresIdentifier(databaseName)}`);
         }
+    } catch (error) {
+        console.error('Error ensuring PostgreSQL database exists:', error);
+        throw error;
     } finally {
         await adminSql.close();
     }
