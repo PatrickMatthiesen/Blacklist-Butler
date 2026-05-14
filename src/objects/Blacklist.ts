@@ -104,15 +104,18 @@ export class Blacklist {
     async removeOne(name: string) {
         console.log('removes ' + name);
 
-        this.remove(name);
+        const removedFromChar = this.remove(name);
+        if (!removedFromChar) {
+            return false;
+        }
+
         this.sort();
         console.log('sorted');
 
 
-        const char = this.getChar(name);
         console.log('got char');
 
-        await this.updateMessage(char);
+        await this.updateMessage(removedFromChar);
         console.log('updated message');
 
         await this.saveBlacklist();
@@ -122,13 +125,19 @@ export class Blacklist {
     }
 
     remove(name: string) {
-        const char = name.charAt(0).toUpperCase();
+        const char = this.getChar(name);
+        const list = this.blacklist.get(char);
+        const removedFromChar = list ? this.removeFromList(name, char, list) : undefined;
+        if (removedFromChar) {
+            return removedFromChar;
+        }
 
-        const list = this.blacklist.get(char) ?? [];
-        if (list.length === 0) return;
-
-        const index = list.indexOf(name);
-        console.log('removed ' + list.splice(index, 1));
+        for (const [fallbackChar, fallbackList] of this.blacklist.entries()) {
+            const fallbackRemovedFromChar = this.removeFromList(name, fallbackChar, fallbackList);
+            if (fallbackRemovedFromChar) {
+                return fallbackRemovedFromChar;
+            }
+        }
     }
 
 
@@ -219,6 +228,30 @@ export class Blacklist {
         if (new RegExp(`^${this.prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[A-Z]`).test(message)) { //^[\\*]*--[A-Z]--
             return message.charAt(this.prefix.length).toLocaleUpperCase();
         } else return message.charAt(0).toLocaleUpperCase();
+    }
+
+    private removeFromList(name: string, char: string, list: string[]) {
+        const index = this.getRemovableIndex(name, list);
+        if (index === -1) {
+            return undefined;
+        }
+
+        console.log('removed ' + list.splice(index, 1));
+        return char;
+    }
+
+    private getRemovableIndex(name: string, list: string[]) {
+        const index = list.indexOf(name);
+        if (index === -1) {
+            return -1;
+        }
+
+        const header = list[0];
+        if (name !== header) {
+            return index;
+        }
+
+        return list.indexOf(name, 1);
     }
 
     isEmpty() {

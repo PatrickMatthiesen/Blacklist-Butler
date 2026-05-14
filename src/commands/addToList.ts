@@ -19,6 +19,7 @@ abstract class BlacklistButler {
         if (!await deferInteraction(interaction)) return;
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
+        name = name.trim();
         if (!name) {
             await respond(interaction, 'please add a name');
             return;
@@ -55,12 +56,22 @@ abstract class BlacklistButler {
         if (!await deferInteraction(interaction)) return;
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
 
+        name = name.trim();
+        if (!name) {
+            await respond(interaction, 'please add a name');
+            return;
+        }
+
         const store = await getStore(interaction.guildId!);
         const blacklist = new Blacklist(interaction.channel, store);
         await blacklist.init();
 
         try {
-            await blacklist.removeOne(name);
+            if (!await blacklist.removeOne(name)) {
+                await respond(interaction, `${name} was not found in the blacklist`);
+                return;
+            }
+
             await respond(interaction, 'name has been removed');
         } catch (error) {
             await respond(interaction, getBlacklistWriteErrorMessage(error));

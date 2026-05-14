@@ -5,7 +5,8 @@ import { createBuilder } from './.modules/aspire.js';
 
 const builder = await createBuilder();
 
-await builder.addDockerComposeEnvironment('docker-compose');
+await builder.addDockerComposeEnvironment('docker-compose')
+    .withDashboard({ enabled: false });
 
 const discordToken = await builder.addParameter('discord-token', { secret: true });
 
