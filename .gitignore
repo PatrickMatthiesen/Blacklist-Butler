@@ -367,3 +367,4 @@ MigrationBackup/
 .modules/
 dist/
 .aspire/
+aspire-output/
