@@ -3,11 +3,19 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+blacklist-butler-*.json
+
 #vs code folder
 .vscode
 
 #build folder
 build
+aspire/dist
+aspire/.aspire
+aspire/.modules/*
+!aspire/.modules/
+!aspire/.modules/aspire.js
+!aspire/.modules/aspire.d.ts
 
 # User-specific files
 *.rsuser
@@ -280,7 +288,7 @@ FakesAssemblies/
 # Node.js Tools for Visual Studio
 .ntvs_analysis.dat
 node_modules/
-*.env
+*.env*
 *firebase*.json
 
 # Visual Studio 6 build log
@@ -356,3 +364,6 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+.modules/
+dist/
+.aspire/

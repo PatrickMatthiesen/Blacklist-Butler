@@ -1,4 +1,5 @@
 import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
+import { validatePostgresConfiguration } from '../Postgres/postgres-client.js';
 import { validateSupabaseConfiguration } from '../Supabase/supabase-client.js';
 import { resolveStoreType } from './store-type.js';
 
@@ -12,6 +13,11 @@ export function initializeStoreBackend(env: NodeJS.ProcessEnv = process.env) {
 
     if (storeType === 'supabase') {
         validateSupabaseConfiguration(env);
+        return;
+    }
+
+    if (storeType === 'postgres') {
+        validatePostgresConfiguration(env);
     }
 }
 

@@ -1,4 +1,4 @@
-export const supportedStoreTypes = ['local', 'firebase', 'supabase'] as const;
+export const supportedStoreTypes = ['local', 'firebase', 'supabase', 'postgres'] as const;
 
 export type StoreType = (typeof supportedStoreTypes)[number];
 
@@ -11,6 +11,7 @@ export function resolveStoreType(env: NodeJS.ProcessEnv = process.env): StoreTyp
 
     if (configured) {
         if (isStoreType(configured)) {
+            console.log(`Using STORE_TYPE: ${configured}`);
             return configured;
         }
 
@@ -18,8 +19,10 @@ export function resolveStoreType(env: NodeJS.ProcessEnv = process.env): StoreTyp
     }
 
     if (env.GOOGLE_APPLICATION_CREDENTIALS || env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+        console.log('Using store type: firebase (detected Google credentials)');
         return 'firebase';
     }
 
+    console.log('Using store type: local (fallback)');
     return 'local';
 }

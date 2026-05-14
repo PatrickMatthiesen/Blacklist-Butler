@@ -1,6 +1,8 @@
 services:
   blacklist-butler:
-    build: .
+    build: 
+      context: ..
+      dockerfile: ./docker/Dockerfile
     container_name: blacklist-butler
     restart: unless-stopped
     ports:
@@ -8,10 +10,11 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
-      - STORE_TYPE=${STORE_TYPE} # local, firebase, or supabase
-      - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
+      - STORE_TYPE=${STORE_TYPE} # local, firebase, supabase, or postgres
+      - DATABASE_URL=${DATABASE_URL}
+      # - FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}
       # Option A: provide base64 service account (uncomment and set value)
-      - FIREBASE_SERVICE_ACCOUNT_BASE64=${FIREBASE_SERVICE_ACCOUNT_BASE64}
+      # - FIREBASE_SERVICE_ACCOUNT_BASE64=${FIREBASE_SERVICE_ACCOUNT_BASE64}
       # Option B: mount credentials file & point GOOGLE_APPLICATION_CREDENTIALS to it
       # - GOOGLE_APPLICATION_CREDENTIALS=/run/secrets/firebase_sa.json
       - SUPABASE_URL=${SUPABASE_URL}

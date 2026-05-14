@@ -6,8 +6,10 @@ on:
       - main
     paths:
       - ".github/workflows/main_blacklist-butler.yml"
-      - "docker-compose.yml"
-      - "dockerfile"
+      - "aspire/**"
+      - "Dockerfile"
+      - ".dockerignore"
+      - "docker/**"
       - "src/**"
       - "package.json"
       - "bun.lock"
@@ -31,6 +33,27 @@ jobs:
       - uses: actions/checkout@v5
         name: Checkout code
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install Aspire CLI
+        run: |
+          curl -sSL https://aspire.dev/install.sh | bash -s -- --quality "dev"
+          echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
+
+      - name: Install Aspire AppHost dependencies
+        run: npm install
+        working-directory: ./aspire
+
+      - name: Publish Aspire Docker Compose artifacts
+        run: aspire publish
+        working-directory: ./aspire
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+
       - name: Connect to Tailscale
         uses: tailscale/github-action@v4
         with:
@@ -48,12 +71,15 @@ jobs:
 
       - name: "Deploy container"
         run: |
-          docker context create docker-host --docker "host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
-          docker --context docker-host compose up --build -d
-          docker context rm docker-host || true
+          docker context create "$DOCKER_CONTEXT_NAME" --docker "host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+          trap 'docker context rm "$DOCKER_CONTEXT_NAME" || true' EXIT
+
+          # The bot and migrations use the same dockerfile, so we only need to build once. 
+          docker --context "$DOCKER_CONTEXT_NAME" build -t "$BOT_IMAGE" .
+          docker --context "$DOCKER_CONTEXT_NAME" compose -f aspire/aspire-output/docker-compose.yaml up -d --remove-orphans
         env:
-          PORT: 3000
-          STORE_TYPE: supabase
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          BOT_IMAGE: blacklist-butler:${{ github.sha }}
+          APPLY_MIGRATIONS_IMAGE: blacklist-butler:${{ github.sha }}
+          DOCKER_CONTEXT_NAME: docker-host-${{ github.run_id }}
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
