@@ -10,10 +10,14 @@ await builder.addDockerComposeEnvironment('docker-compose')
 
 const discordToken = await builder.addParameter('discord-token', { secret: true });
 
-const postgres = await builder.addPostgres('postgres')
+const postgresServer = await builder.addPostgres('postgres')
     .withDataVolume()
     .withPgAdmin()
-    .addDatabase('blacklist-butler');
+    .publishAsDockerComposeService(async (_, service) => {
+        await service.restart.set('unless-stopped');
+    });
+
+const postgres = await postgresServer.addDatabase('blacklist-butler');
 
 const applyMigrations = builder.addJavaScriptApp('apply-migrations', '..', {
     runScriptName: 'migrate:postgres-schema'
@@ -27,7 +31,9 @@ const applyMigrations = builder.addJavaScriptApp('apply-migrations', '..', {
 
 const bot = builder.addJavaScriptApp("bot", "..")
     .withBun()
-    .publishAsDockerFile(async () => { })
+    .publishAsDockerComposeService(async (_, service) => {
+        await service.restart.set('unless-stopped');
+    })
     .withEnvironment('DISCORD_TOKEN', discordToken)
     .withEnvironment('STORE_TYPE', 'postgres')
     .waitFor(postgres)
