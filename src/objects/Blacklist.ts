@@ -65,8 +65,14 @@ export class Blacklist {
     }
 
     addOld(message: Message) {
-        message.content.split('\n').forEach(name => this.add(name));
-        this.messages.set(message.content.charAt(this.prefix.length), message);
+        const lines = message.content.split(/\r?\n/);
+        const char = lines[0].charAt(this.prefix.length);
+        const header = this.prefix + char + this.prefix.split('').reverse().join('');
+        if (!/^[A-Z]$/.test(char) || lines[0] !== header || this.messages.has(char)) return;
+
+        // History is read newest first, so older copies cannot replace the live message.
+        this.blacklist.set(char, [...lines.filter(line => line.trim().length > 0), ...(this.blacklist.get(char)?.slice(1) ?? [])]);
+        this.messages.set(char, message);
         if (message.author.id != '915952587273023508') { // if it isn't this bot that send the message then delete the message
             this.toDelete.push(message);
         }
@@ -266,6 +272,14 @@ export class Blacklist {
         }
 
         return false;
+    }
+
+    hasStoredMessages() {
+        return this.messages.size > 0;
+    }
+
+    hasForeignMessages(authorId: string) {
+        return [...this.messages.values()].some(message => message.author.id !== authorId);
     }
 
     getPrefix() {

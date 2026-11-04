@@ -1,0 +1,31 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [],
+  "categories": {
+    "correctness": "off"
+  },
+  "options": {
+    "typeAware": true
+  },
+  "env": {
+    "builtin": true
+  },
+  "overrides": [
+    {
+      "files": [
+        "apphost.mts"
+      ],
+      "rules": {
+        "typescript/no-floating-promises": [
+          "error",
+          {
+            "checkThenables": true
+          }
+        ]
+      },
+      "plugins": [
+        "typescript"
+      ]
+    }
+  ]
+}

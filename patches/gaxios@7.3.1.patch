@@ -1,0 +1,48 @@
+diff --git a/build/cjs/src/gaxios.d.ts b/build/cjs/src/gaxios.d.ts
+index dfa3a671f9b14c5be6db633d03e9735c04bd7dc7..66594a62d29b23b7cb27a23c23660b2759ee6f58 100644
+--- a/build/cjs/src/gaxios.d.ts
++++ b/build/cjs/src/gaxios.d.ts
+@@ -1,18 +1,7 @@
+ import { Agent } from 'http';
+ import { GaxiosOptions, GaxiosOptionsPrepared, GaxiosPromise, GaxiosResponse } from './common.js';
+ import { GaxiosInterceptorManager } from './interceptor.js';
+-/**
+- * An interface for enforcing `fetch`-type compliance.
+- *
+- * @remarks
+- *
+- * This provides type guarantees during build-time, ensuring the `fetch` method is 1:1
+- * compatible with the `fetch` API.
+- */
+-interface FetchCompliance {
+-    fetch: typeof fetch;
+-}
+-export declare class Gaxios implements FetchCompliance {
++export declare class Gaxios {
+     #private;
+     protected agentCache: Map<string | URL, Agent | ((parsedUrl: URL) => Agent)>;
+     /**
+diff --git a/build/esm/src/gaxios.d.ts b/build/esm/src/gaxios.d.ts
+index dfa3a671f9b14c5be6db633d03e9735c04bd7dc7..66594a62d29b23b7cb27a23c23660b2759ee6f58 100644
+--- a/build/esm/src/gaxios.d.ts
++++ b/build/esm/src/gaxios.d.ts
+@@ -1,18 +1,7 @@
+ import { Agent } from 'http';
+ import { GaxiosOptions, GaxiosOptionsPrepared, GaxiosPromise, GaxiosResponse } from './common.js';
+ import { GaxiosInterceptorManager } from './interceptor.js';
+-/**
+- * An interface for enforcing `fetch`-type compliance.
+- *
+- * @remarks
+- *
+- * This provides type guarantees during build-time, ensuring the `fetch` method is 1:1
+- * compatible with the `fetch` API.
+- */
+-interface FetchCompliance {
+-    fetch: typeof fetch;
+-}
+-export declare class Gaxios implements FetchCompliance {
++export declare class Gaxios {
+     #private;
+     protected agentCache: Map<string | URL, Agent | ((parsedUrl: URL) => Agent)>;
+     /**

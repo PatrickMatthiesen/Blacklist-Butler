@@ -45,6 +45,18 @@ Go to a link bellow and pick the server you want to add the bot to.
 
 Simply use the /add or /remove commands and give the name that you want to add or remove from the list.
 
+## Import an existing channel list
+
+Run `/blacklist import first-id:<first-message-id> last-id:<last-message-id>` in the `blacklist` channel. Copy and paste the two IDs into the slash command options while browsing the channel, then send the command. There are no popups or ID setup buttons. Either ID order works.
+
+The bot reads that inclusive range, detects the header prefix (for example, `**--A--**` gives `**--`), and previews the section and name counts. Confirm with Import, or choose Cancel. The prefix, names, and original message IDs are saved only after confirmation; the Discord messages stay unchanged. The messages must belong to this bot so later commands can edit them. The range can contain up to 1,000 messages and must contain only one section per letter.
+
+In the `blacklist` channel, run `/blacklist init from-old-list:true` to import the formatted list and save its existing Discord message IDs. Leave `rewrite-list` off. Import reads channel history without deleting, editing, or reposting messages. Later add and remove commands use the saved IDs to edit the existing messages.
+
+The saved prefix must match the existing section headers. If needed, use `/blacklist set-prefix` before importing. If history contains several copies of a letter's section, import uses the newest valid one. To also import `add Name` messages, enable `has-old`.
+
+`rewrite-list:true` explicitly replaces the channel list messages. It is not required for an ordinary import.
+
 ## Other commands to know
 
 ### -Role permissions
@@ -97,3 +109,24 @@ A TypeScript Aspire AppHost is available under 'aspire/' and models the bot cont
 1. Install the Aspire CLI and Docker prerequisites for your machine.
 2. Open a command prompt in 'aspire/' and run 'npm install'.
 3. Run 'aspire run' and provide the Discord token parameter when prompted.
+
+## Development checks
+
+Use Bun 1.4.4 or later. `bun run typecheck` uses Bun's built-in checker and reads `tsconfig.json`, including its strict library checks. The Aspire build still uses `tsc` to emit JavaScript.
+
+```bash
+bun install --frozen-lockfile
+bun run lint
+bun run typecheck
+bun test
+```
+
+The bot uses discord.js command builders and explicit handlers in `src/commands/index.ts`. At startup, it registers commands in each guild it belongs to. Command tests run without a Discord token or external storage services.
+
+Oxlint checks the bot and its tests using the root `.oxlintrc.json`. Run `bun run lint` inside `aspire/` for the separate AppHost rules, including type-aware unhandled-promise checks using `tsconfig.apphost.json`. The bot does not need the TypeScript compiler package; Aspire retains it to emit JavaScript.
+
+The bot uses Node 25 declarations because Sapphire, a discord.js dependency, imports a type removed in Node 26 declarations. The Aspire project keeps JSON-RPC 8 because its generated SDK imports `vscode-jsonrpc/node.js`.
+
+Bun applies the checked-in `patches/` files to Supabase Auth and Gaxios declarations. These correct conflicts with TypeScript's WebAuthn types and Bun's `fetch.preconnect` property; they do not change runtime code. Recheck the patches when upgrading those packages. Both Dockerfiles copy the patches before installing dependencies.
+
+The root manifest overrides Glob and Minimatch to patched versions outside some parent packages' declared ranges. The Aspire manifest also overrides Minimatch. Recheck these overrides when updating Firebase or development tools, and remove them once the parent packages require patched versions.

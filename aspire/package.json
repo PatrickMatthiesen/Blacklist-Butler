@@ -7,7 +7,7 @@
     "node": "^20.19.0 || ^22.13.0 || >=24"
   },
   "scripts": {
-    "aspire:lint": "eslint apphost.mts",
+    "aspire:lint": "oxlint --type-aware --tsconfig tsconfig.apphost.json apphost.mts --deny-warnings",
     "aspire:start": "aspire run",
     "aspire:build": "tsc -p tsconfig.apphost.json",
     "aspire:dev": "tsc --watch -p tsconfig.apphost.json",
@@ -22,11 +22,14 @@
     "vscode-jsonrpc": "^8.2.0"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0",
-    "eslint": "^10.0.3",
+    "@types/node": "^26.6.6",
     "nodemon": "^3.1.14",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.1"
+    "oxlint": "^1.91.0",
+    "oxlint-tsgolint": "^7.0.2005",
+    "tsx": "^4.23.15",
+    "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "minimatch": "11.0.4"
   }
 }

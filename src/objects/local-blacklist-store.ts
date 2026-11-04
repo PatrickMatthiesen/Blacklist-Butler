@@ -51,11 +51,15 @@ export class LocalBlacklistStore implements BlacklistStore {
     async loadConfig(): Promise<Map<string, string>> {
         // load the config file
         const file = Bun.file(`${this.folderPath}/config.json`);
-        const config = await file.json();
-        if (config) {
-            return new Map<string, string>(config);
+        try {
+            const config = await file.json();
+            return config ? new Map<string, string>(config) : new Map<string, string>();
+        } catch (error) {
+            if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
+                return new Map<string, string>();
+            }
+            throw error;
         }
-        return new Map<string, string>();
     }
 
     async loadByName(name: string): Promise<string | null> {
