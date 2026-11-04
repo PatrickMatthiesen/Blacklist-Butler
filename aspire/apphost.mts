@@ -11,7 +11,10 @@ await builder.addDockerComposeEnvironment('docker-compose')
 const discordToken = await builder.addParameter('discord-token', { secret: true });
 
 const postgresServer = await builder.addPostgres('postgres')
-    .withDataVolume()
+    // Production was migrated to this PostgreSQL 18 volume explicitly.
+    // Keep the version and volume stable across Aspire upgrades.
+    .withImageTag('18.3')
+    .withDataVolume({ name: 'postgres18-data' })
     .withPgAdmin()
     .publishAsDockerComposeService(async (_, service) => {
         await service.restart.set('unless-stopped');

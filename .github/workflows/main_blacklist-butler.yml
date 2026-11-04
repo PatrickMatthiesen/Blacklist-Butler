@@ -70,11 +70,26 @@ jobs:
       - name: "Deploy container"
         run: |
           docker context create "$DOCKER_CONTEXT_NAME" --docker "host=ssh://${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
-          trap 'docker context rm "$DOCKER_CONTEXT_NAME" || true' EXIT
+          compose=(docker --context "$DOCKER_CONTEXT_NAME" compose -p blacklist-butler -f aspire/aspire-output/docker-compose.yaml)
+          trap '"${compose[@]}" logs --no-color --tail 80 postgres apply-migrations || true; docker context rm "$DOCKER_CONTEXT_NAME" || true' EXIT
 
           # The bot and migrations use the same dockerfile, so we only need to build once. 
           docker --context "$DOCKER_CONTEXT_NAME" build -t "$BOT_IMAGE" .
-          docker --context "$DOCKER_CONTEXT_NAME" compose -p blacklist-butler -f aspire/aspire-output/docker-compose.yaml up -d --remove-orphans
+          # Compose's service_started dependency does not wait for PostgreSQL readiness.
+          "${compose[@]}" up -d postgres
+          ready=false
+          for attempt in {1..30}; do
+            if "${compose[@]}" exec -T postgres pg_isready -U postgres -d postgres; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          if [ "$ready" != true ]; then
+            echo "PostgreSQL did not become ready; refusing to run migrations."
+            exit 1
+          fi
+          "${compose[@]}" up -d --remove-orphans
         env:
           BOT_IMAGE: blacklist-butler:${{ github.sha }}
           APPLY_MIGRATIONS_IMAGE: blacklist-butler:${{ github.sha }}
