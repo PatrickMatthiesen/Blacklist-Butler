@@ -90,6 +90,11 @@ export class BlacklistCommands {
                 if (hasOldAdds) await addAllMessages(interaction.channel, importedBlacklist);
                 else await addOldMessages(interaction.channel, importedBlacklist);
 
+                if (!rewriteList && importedBlacklist.hasForeignMessages(interaction.client.user!.id)) {
+                    await respond(interaction, 'The selected list contains messages authored by another account, so this bot cannot edit them. Nothing was imported and no channel messages were changed.');
+                    return;
+                }
+
                 const hasImportedList = importedBlacklist.hasStoredMessages() || importedBlacklist.hasStoredNames();
                 const hasSavedList = blacklist.hasStoredMessages() || blacklist.hasStoredNames();
                 const activeBlacklist = hasImportedList ? importedBlacklist : blacklist;

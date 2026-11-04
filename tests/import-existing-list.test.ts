@@ -26,15 +26,15 @@ afterEach(async () => {
     }
 });
 
-function message(id: string, content: string) {
+function message(id: string, content: string, authorId = '915952587273023508') {
     return {
-        id, content, author: { id: '915952587273023508' },
+        id, content, author: { id: authorId },
         delete: mock(async () => {}),
         edit: mock(async (content: string) => ({ id, content })),
     };
 }
 
-function fixture(messages: ReturnType<typeof message>[]) {
+function fixture(messages: ReturnType<typeof message>[], botUserId = '915952587273023508') {
     const fetch = mock(async (options: string | { limit: number; before?: string }) => {
         if (typeof options === 'string') return messages.find(message => message.id === options);
         const offset = options.before ? messages.findIndex(message => message.id === options.before) + 1 : 0;
@@ -44,6 +44,7 @@ function fixture(messages: ReturnType<typeof message>[]) {
     const channel = { name: 'blacklist', guildId: 'import-test', messages: { fetch }, send };
     const event = {
         guildId: 'import-test', channel, deferred: false, replied: false,
+        client: { user: { id: botUserId } },
         deferReply: mock(async () => { event.deferred = true; }),
         editReply: mock(async (options: { content: string }) => options),
     };
@@ -122,4 +123,34 @@ test('no matching formatted list leaves saved data and channel messages unchange
     expect(run.send).not.toHaveBeenCalled();
     expect(unrelated.delete).not.toHaveBeenCalled();
     expect(unrelated.edit).not.toHaveBeenCalled();
+});
+
+test('a newer foreign section cannot replace saved data or shadow an editable section during import', async () => {
+    const previous = JSON.stringify([['A', ['***--A--***', 'Saved']]]);
+    const previousMessages = JSON.stringify([['A', { id: 'saved-id' }]]);
+    await writeFile(join(directory, 'guilds', 'import-test', 'Blacklist.json'), previous);
+    await writeFile(join(directory, 'guilds', 'import-test', 'messages.json'), previousMessages);
+    const foreign = message('200', '***--A--***\nForeign', 'another-account');
+    const editable = message('100', '***--A--***\nAlice');
+    const run = fixture([foreign, editable]);
+    await new BlacklistCommands().init(true, false, false, run.event);
+    expect(run.editReply.mock.calls.at(-1)![0].content).toContain('authored by another account');
+    expect(await readFile(join(directory, 'guilds', 'import-test', 'Blacklist.json'), 'utf8')).toBe(previous);
+    expect(await readFile(join(directory, 'guilds', 'import-test', 'messages.json'), 'utf8')).toBe(previousMessages);
+    expect(run.send).not.toHaveBeenCalled();
+    for (const entry of [foreign, editable]) {
+        expect(entry.delete).not.toHaveBeenCalled();
+        expect(entry.edit).not.toHaveBeenCalled();
+    }
+});
+
+test('ownership uses the running bot identity rather than the original hard-coded account', async () => {
+    const current = message('100', '***--A--***\nAlice', 'current-bot-account');
+    const run = fixture([current], 'current-bot-account');
+    await new BlacklistCommands().init(true, false, false, run.event);
+    expect((await saved('messages')).get('A')).toMatchObject({ id: '100' });
+    expect((await saved('Blacklist')).get('A')).toEqual(['***--A--***', 'Alice']);
+    expect(run.send).not.toHaveBeenCalled();
+    expect(current.delete).not.toHaveBeenCalled();
+    expect(current.edit).not.toHaveBeenCalled();
 });

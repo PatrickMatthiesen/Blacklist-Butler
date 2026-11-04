@@ -278,6 +278,10 @@ export class Blacklist {
         return this.messages.size > 0;
     }
 
+    hasForeignMessages(authorId: string) {
+        return [...this.messages.values()].some(message => message.author.id !== authorId);
+    }
+
     getPrefix() {
         return this.prefix;
     }
