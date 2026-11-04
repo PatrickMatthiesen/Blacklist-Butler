@@ -1,19 +1,11 @@
-import { ApplicationCommandOptionType, CommandInteraction, Message, TextBasedChannel, TextChannel, PermissionsBitField, MessageFlags } from 'discord.js';
-import { Discord, Slash, SlashGroup, SlashOption } from 'discordx';
+import { CommandInteraction, Message, TextBasedChannel, TextChannel, MessageFlags } from 'discord.js';
 import { Blacklist, BlacklistWriteError } from '../objects/Blacklist.js';
 import { setGuildBlPrefix } from '../objects/GuildDataHandler.js';
 import { BlacklistStore } from '../interfaces/blacklist-store.js';
 import { createBlacklistStore } from '../stores/store-factory.js';
 
-
-
-@Discord()
-@SlashGroup({ description: 'Manage Blacklist', name: 'blacklist', defaultMemberPermissions: [PermissionsBitField.Flags.ManageGuild, PermissionsBitField.Flags.Administrator] })
-@SlashGroup('blacklist')
-abstract class BlacklistButler {
-    @Slash({ name: 'add', description: 'Adds the users to the blacklist' })
+export class BlacklistCommands {
     async add(
-        @SlashOption({ name: 'name', description: 'name of person', required: true, type: ApplicationCommandOptionType.String })
         name: string,
         interaction: CommandInteraction): Promise<void> {
         if (!await deferInteraction(interaction)) return;
@@ -48,9 +40,7 @@ abstract class BlacklistButler {
         }
     }
 
-    @Slash({ name: 'remove', description: 'Removes a user from the blacklist' })
     async remove(
-        @SlashOption({ name: 'name', description: 'name to remove', required: true, type: ApplicationCommandOptionType.String })
         name: string,
         interaction: CommandInteraction): Promise<void> {
         if (!await deferInteraction(interaction)) return;
@@ -78,13 +68,9 @@ abstract class BlacklistButler {
         }
     }
 
-    @Slash({ name: 'init', description: 'Adds the users to the blacklist' })
     async init(
-        @SlashOption({ name: 'from-old-list', description: 'use this option if you have an old list to init from', required: false, type: ApplicationCommandOptionType.Boolean })
         fromOldList = false,
-        @SlashOption({ name: 'has-old', description: '(require "from-old-list = true") if messages like "add `name`" should be added to the list', required: false, type: ApplicationCommandOptionType.Boolean })
         hasOldAdds = false,
-        @SlashOption({ name: 'rewrite-list', description: 'require from-old-list; rewrite the blacklist messages in this channel', required: false, type: ApplicationCommandOptionType.Boolean })
         rewriteList = false,
         interaction: CommandInteraction): Promise<void> {
         if (!await deferInteraction(interaction)) return;
@@ -104,13 +90,14 @@ abstract class BlacklistButler {
                 if (hasOldAdds) await addAllMessages(interaction.channel, importedBlacklist);
                 else await addOldMessages(interaction.channel, importedBlacklist);
 
-                const hasImportedNames = importedBlacklist.hasStoredNames();
-                const hasSavedNames = blacklist.hasStoredNames();
-                const activeBlacklist = hasImportedNames ? importedBlacklist : blacklist;
+                const hasImportedList = importedBlacklist.hasStoredMessages() || importedBlacklist.hasStoredNames();
+                const hasSavedList = blacklist.hasStoredMessages() || blacklist.hasStoredNames();
+                const activeBlacklist = hasImportedList ? importedBlacklist : blacklist;
 
-                if (hasImportedNames) {
+                if (hasImportedList) {
                     await importedBlacklist.saveBlacklist();
-                } else if (!hasSavedNames) {
+                    if (!rewriteList) await importedBlacklist.saveMessages();
+                } else if (!hasSavedList) {
                     await respond(interaction, 'I could not find an old blacklist in this channel, and there is no saved blacklist to reuse.');
                     return;
                 }
@@ -121,8 +108,8 @@ abstract class BlacklistButler {
                     await activeBlacklist.saveMessages();
                 }
 
-                if (hasImportedNames) {
-                    await respond(interaction, 'stored your list' + (hasOldAdds ? ' and added extras' : '') + (rewriteList ? ', and rewrote the blacklist messages in this channel' : ' to the database'));
+                if (hasImportedList) {
+                    await respond(interaction, 'stored your list' + (hasOldAdds ? ' and added extras' : '') + (rewriteList ? ', and rewrote the blacklist messages in this channel' : ' and its existing message references without changing the channel messages'));
                 } else {
                     await respond(interaction, 'No old blacklist messages were found in this channel, so I reused the saved blacklist' + (rewriteList ? ' and rewrote the blacklist messages here' : '') + '.');
                 }
@@ -144,11 +131,8 @@ abstract class BlacklistButler {
 
     }
 
-
-    @Slash({ name: 'print', description: 'Prints the blacklist to the channel' })
     async print(
-        @SlashOption({ name: 'clean', description: 'delete all other messages before printing the list', required: false, type: ApplicationCommandOptionType.String })
-        clean = false,
+        clean: string | null = null,
         interaction: CommandInteraction): Promise<void> {
         if (!await deferInteraction(interaction)) return;
         if (!interaction.channel || !await isBlacklistChannel(interaction)) return;
@@ -181,13 +165,16 @@ abstract class BlacklistButler {
     //if you really dont have a life, then make it so it removes all the category headers and add on the new ones
     //either just use the funktion that have been made (simpe but might be a litte performance heavy?),
     // or make a better one for this usecase (which might be a bad idea as it is a waste of time and code space)
-    @Slash({ name: 'set-prefix', description: 'set the prefix that formats the headers in the blacklist' })
     async setPrefix(
-        @SlashOption({ name: 'prefix', description: 'a prefix like "--" for a header "--A--" or "***" for a bold and italics header', type: ApplicationCommandOptionType.String })
-        prefix: string,
+        prefix: string | null,
         interaction: CommandInteraction): Promise<void> {
         if (!await deferInteraction(interaction)) return;
         if (!interaction.guildId) return;
+
+        if (prefix === null) {
+            await respond(interaction, 'please add a prefix');
+            return;
+        }
 
         const store = await getStore(interaction.guildId!);
 
@@ -242,19 +229,22 @@ async function addOldMessages(channel: TextBasedChannel, blacklist: Blacklist) {
 }
 
 async function fetchAndHandle(channel: TextBasedChannel, blacklist: Blacklist, singles = false, old = false) {
-    await channel.messages.fetch().then(messages => {
-        console.log(`Received ${messages.size} messages`);
-        //Iterate through the messages here with the variable "messages".
-        messages.forEach((msg: Message<boolean>) => {
+    let before: string | undefined;
+    while (true) {
+        const messages = await channel.messages.fetch({ limit: 100, before, cache: false });
+        if (messages.size === 0) return;
+
+        for (const msg of messages.values()) {
             if (old) { //old
                 addOld(msg, blacklist);
             }
             if (singles) {
                 addSingles(msg, blacklist);
             }
-            console.log(msg.content);
-        });
-    });
+        }
+
+        before = messages.last()!.id;
+    }
 }
 
 async function deleteOld(channel: TextBasedChannel, blPrefix: string) {
@@ -270,13 +260,13 @@ async function deleteOld(channel: TextBasedChannel, blPrefix: string) {
     });
 }
 
-async function addOld(msg: Message, blacklist: Blacklist) {
+function addOld(msg: Message, blacklist: Blacklist) {
     if (msg.content.startsWith(blacklist.getPrefix())) {
         blacklist.addOld(msg);
     }
 }
 
-async function addSingles(msg: Message, blacklist: Blacklist) {
+function addSingles(msg: Message, blacklist: Blacklist) {
     if (msg.content.toLowerCase().startsWith('add ')) {
         blacklist.addToDelete(msg);
         if (msg.content.includes('\n')) {
@@ -302,7 +292,7 @@ function getBlacklistWriteErrorMessage(error: unknown) {
         }
         
         console.error('unexpected blacklist write error', error);
-        return 'I could not update the saved blacklist messages for this channel. If you want to rebuild the list here, run /blacklist init with from-old-list enabled and rewrite-list enabled.';
+        return 'I could not update the saved blacklist messages for this channel. If the existing list is still here, run /blacklist init with from-old-list enabled and leave rewrite-list disabled to refresh its message references.';
     }
 
     console.error('unexpected blacklist error', error);

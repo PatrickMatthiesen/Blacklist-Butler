@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "bun src/index.ts --watch",
     "start": "bun src/index.ts",
-    "lint": "eslint",
+    "lint": "oxlint src tests --deny-warnings",
+    "typecheck": "bun check --no-script",
+    "test": "bun test",
     "migrate:postgres-schema": "bun src/Postgres/apply-migrations.ts",
     "migrate:supabase-to-postgres": "bun src/Postgres/supabase-to-postgres.ts",
     "docker:build": "docker build -t blacklist-butler .",
@@ -25,27 +27,28 @@
   },
   "homepage": "https://github.com/DarkLordOfDeadstiny/Blacklist-Butler#readme",
   "dependencies": {
-    "@discordx/importer": "^1.3.3",
-    "@supabase/supabase-js": "^2.101.1",
-    "discord.js": "14.26.2",
-    "discordx": "11.13.3",
-    "firebase-admin": "13.7.0",
-    "reflect-metadata": "0.2.2",
-    "vscode-jsonrpc": "^8.2.0"
+    "@supabase/supabase-js": "^2.119.0",
+    "discord.js": "14.28.1",
+    "firebase-admin": "14.5.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.22.0",
-    "@types/bun": "1.3.11",
-    "eslint": "^10.0.3",
-    "jiti": "^2.6.1",
-    "typescript-eslint": "^8.58.0",
-    "@types/node": "^25.6.2",
+    "@types/bun": "1.4.4",
+    "@types/node": "^25.9.9",
     "nodemon": "^3.1.14",
-    "tsx": "^4.21.0",
-    "typescript": "^6.0.3"
+    "oxlint": "^1.91.0",
+    "tsx": "^4.23.15"
   },
   "type": "module",
   "engines": {
-    "node": "^20.19.0 || ^22.13.0 || >=24"
+    "bun": ">=1.4.4",
+    "node": "^22.13.0 || >=24"
+  },
+  "overrides": {
+    "minimatch": "11.0.4",
+    "glob": "14.0.3"
+  },
+  "patchedDependencies": {
+    "@supabase/auth-js@2.119.0": "patches/@supabase%2Fauth-js@2.119.0.patch",
+    "gaxios@7.3.1": "patches/gaxios@7.3.1.patch"
   }
 }

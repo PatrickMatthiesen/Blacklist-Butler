@@ -1,0 +1,13 @@
+diff --git a/dist/module/lib/webauthn.dom.d.ts b/dist/module/lib/webauthn.dom.d.ts
+index 2b004e46b6a469572989fed4e10c644fff42fa3d..c81ceade9e31bb5dcaf3fe1b9d4d50c126c422f4 100644
+--- a/dist/module/lib/webauthn.dom.d.ts
++++ b/dist/module/lib/webauthn.dom.d.ts
+@@ -498,7 +498,7 @@ export type PublicKeyCredentialJSON = RegistrationResponseJSON | AuthenticationR
+  * @see {@link https://w3c.github.io/webauthn/#publickeycredential W3C WebAuthn Spec - PublicKeyCredential}
+  * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/PublicKeyCredential MDN - PublicKeyCredential}
+  */
+-export interface PublicKeyCredentialFuture<T extends PublicKeyCredentialJSON = PublicKeyCredentialJSON> extends PublicKeyCredential {
++export interface PublicKeyCredentialFuture<T extends PublicKeyCredentialJSON = PublicKeyCredentialJSON> extends Omit<PublicKeyCredential, 'toJSON'> {
+     /**
+      * The type of the credential (always "public-key").
+      * @see {@link https://w3c.github.io/webauthn/#dom-credential-type W3C - type}

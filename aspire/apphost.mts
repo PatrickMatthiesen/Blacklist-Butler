@@ -31,6 +31,10 @@ const applyMigrations = builder.addJavaScriptApp('apply-migrations', '..', {
 
 const bot = builder.addJavaScriptApp("bot", "..")
     .withBun()
+    .publishAsDockerFile(async (container) => {
+        await container.withEntrypoint('bun');
+        await container.withArgs(['src/index.ts']);
+    })
     .publishAsDockerComposeService(async (_, service) => {
         await service.restart.set('unless-stopped');
     })

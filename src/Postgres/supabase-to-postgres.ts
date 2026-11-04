@@ -91,7 +91,8 @@ async function assertPostgresSchemaReady() {
             await sql`select 1 from ${sql(table)} limit 1`;
         } catch (error) {
             throw new Error(
-                `PostgreSQL schema is not ready: table ${table} is unavailable. Run src/Postgres/schema.sql against the configured Postgres connection, then retry. Original error: ${formatError(error)}`
+                `PostgreSQL schema is not ready: table ${table} is unavailable. Run src/Postgres/schema.sql against the configured Postgres connection, then retry. Original error: ${formatError(error)}`,
+                { cause: error }
             );
         }
     }
