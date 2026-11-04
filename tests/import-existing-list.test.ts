@@ -154,3 +154,20 @@ test('ownership uses the running bot identity rather than the original hard-code
     expect(current.delete).not.toHaveBeenCalled();
     expect(current.edit).not.toHaveBeenCalled();
 });
+
+test('blank separators and trailing newlines cannot displace the imported section header', async () => {
+    const current = message('100', '***--A--***\r\n\r\nAlice\r\n  \r\nAaron\r\n');
+    const run = fixture([current]);
+    await new BlacklistCommands().init(true, false, false, run.event);
+    expect((await saved('Blacklist')).get('A')).toEqual(['***--A--***', 'Aaron', 'Alice']);
+    expect(current.edit).not.toHaveBeenCalled();
+    expect(current.delete).not.toHaveBeenCalled();
+    expect(run.send).not.toHaveBeenCalled();
+
+    const next = fixture([current]);
+    await new BlacklistCommands().add('Amber', next.event);
+    expect(current.edit).toHaveBeenCalledWith('***--A--***\nAaron\nAlice\nAmber');
+    expect((await saved('Blacklist')).get('A')).toEqual(['***--A--***', 'Aaron', 'Alice', 'Amber']);
+    expect(next.send).not.toHaveBeenCalled();
+    expect(current.delete).not.toHaveBeenCalled();
+});

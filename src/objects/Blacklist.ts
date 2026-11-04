@@ -71,7 +71,7 @@ export class Blacklist {
         if (!/^[A-Z]$/.test(char) || lines[0] !== header || this.messages.has(char)) return;
 
         // History is read newest first, so older copies cannot replace the live message.
-        this.blacklist.set(char, [...lines, ...(this.blacklist.get(char)?.slice(1) ?? [])]);
+        this.blacklist.set(char, [...lines.filter(line => line.trim().length > 0), ...(this.blacklist.get(char)?.slice(1) ?? [])]);
         this.messages.set(char, message);
         if (message.author.id != '915952587273023508') { // if it isn't this bot that send the message then delete the message
             this.toDelete.push(message);
